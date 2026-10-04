@@ -85,14 +85,16 @@ conversation.
     has ordered **Milestones** (checklist); Company Rocks link to supporting Team Rocks (roll-up).
   - **Measurable** (Scorecard) = name, owner, **goalValue** + **comparator** ∈ {≥, ≤, =, >, <, between},
     format/unit, order; weekly **WeeklyEntry** values keyed by (ISO year, ISO week). The Scorecard is the
-    **trailing 13 ISO weeks** (Monday start), newest-right; a cell is green/red vs goal **+ a non-color
+    **trailing 13 ISO weeks** (Monday start), newest-left; a cell is green/red vs goal **+ a non-color
     marker**; empty ≠ 0.
   - **Issue** = title, raiser, owner?, **listType** ∈ {SHORT, LONG}, **rank**; **solve** records
     solver + solvedAt + resolution note; a solved issue can **convert** to a Todo or Rock with a two-way
     link.
   - **Todo** = 7-day action item: title, owner, **due** (default +7 days), **done**, team, optional
     source link (issue/rock). "My Todos" aggregates across a person's teams.
-- **Quarter / week** (canonical): Rocks use **calendar quarters** (Q1 = Jan–Mar). Scorecard/Todos use
+- **Quarter / week** (canonical): Rocks use **org-configurable quarter definitions** — each quarter has
+  explicit start/end dates, set per Organization by an Admin, **defaulting to calendar quarters**
+  (Q1 = Jan–Mar) when unset (so a non-calendar fiscal year is data, not code). Scorecard/Todos use
   **ISO weeks, Monday start**; store UTC, display in the viewer's timezone.
 - **Loop**: Confirm scope + ask (requirements/plan AC) → branch off `dev` → test (red) → code (green) →
   refactor → self-review (`/code-review` + `/design-review`) → gate → check in → commit → PR to `dev`.

@@ -142,7 +142,8 @@ export async function updateRockStatus(input: unknown) {
 
 ### Time
 - Inject an `AppClock` (seam) so "today", the current quarter, and the current ISO week are deterministic
-  in tests. Store UTC; compute ISO weeks (Monday start) and calendar quarters in `lib/time`.
+  in tests. Store UTC; compute ISO weeks (Monday start) in `lib/time`, and resolve quarters from the
+  org's `QuarterDefinition`s there (calendar-quarter fallback, Q1 = Jan–Mar).
 
 ## When to stop and ask (don't guess on these)
 

@@ -121,7 +121,8 @@ The org is a **Leadership Team** plus **4 departments**, each containing **5 tea
   them in the activity log (FR-2.6).
 
 ### FR-2.5 Admin management
-Admins manage the org from an Admin area: departments, teams, users, memberships, role assignment.
+Admins manage the org from an Admin area: departments, teams, users, memberships, role assignment, and
+the organization's quarter/fiscal-year definitions (FR-3.2 → AC-3.2.4).
 - **AC-2.5.1** *Given* an Admin, *when* they create/rename/retire a team or department, *then* it is
   reflected in the switcher and filters immediately; retiring a team archives (never hard-deletes) its
   data.
@@ -167,6 +168,11 @@ off-track, done}.
   (never color alone — NFR-3).
 - **AC-3.2.3** *Given* the quarter ends, *then* a Rock not marked done is reported as incomplete in that
   quarter's view; Rocks are immutable-by-default once a quarter is closed (editable only by Admin).
+- **AC-3.2.4** *Given* an Admin, *when* they define the organization's quarters (each with an explicit
+  **start and end date** — e.g. a non-calendar fiscal year), *then* those definitions drive every quarter
+  selector, the current-quarter default, and the quarter-closed check; *given* no custom definition,
+  *then* quarters default to **calendar quarters** (Q1 = Jan–Mar). Quarter definitions are org-scoped
+  configuration (FR-2.7), never hard-coded.
 
 ### FR-3.3 Milestones
 A Rock may have an ordered **milestone checklist** (title, optional due date, done).
