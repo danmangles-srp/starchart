@@ -266,7 +266,7 @@ The backbone every module depends on. **ACs:** FR-1, FR-2 (+ FR-2.7).
 **Objective:** quarterly priorities at Company/Team/Individual levels — milestones, statuses, the
 quarter selector (org-configurable), and company→team roll-up. **ACs:** FR-3 (+ FR-7.3 selector).
 
-- **T2.1 — Rocks schema + data access.**
+- **COMPLETE (#14) · T2.1 — Rocks schema + data access.**
   `Build:` `Rock` (title, description, ownerId, level ∈ {COMPANY, TEAM, INDIVIDUAL}, teamId nullable,
   quarterRef, dueDate, status), `Milestone` (rockId, title, dueDate, done, order), `RockLink`
   (companyRockId ↔ teamRockId); migration + scoped data-access; **expose `myItemsFor`/`teamSummary`**

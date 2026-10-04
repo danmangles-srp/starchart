@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { toRockStatus, toDbRockStatus, milestoneProgress, type DbRockStatus } from './rock';
+import {
+  toRockStatus,
+  toDbRockStatus,
+  milestoneProgress,
+  rollupStatus,
+  type DbRockStatus,
+} from './rock';
 import type { RockStatus } from '@/theme/status';
 
 describe('rock status mapping', () => {
@@ -21,5 +27,15 @@ describe('milestoneProgress', () => {
   it('formats done/total', () => {
     expect(milestoneProgress(2, 5)).toBe('2/5');
     expect(milestoneProgress(0, 0)).toBe('0/0');
+  });
+});
+
+describe('rollupStatus', () => {
+  it('rolls a company rock up from its team rocks, worst-case first', () => {
+    expect(rollupStatus([])).toBe('on-track');
+    expect(rollupStatus(['on-track', 'off-track', 'at-risk'])).toBe('off-track');
+    expect(rollupStatus(['on-track', 'at-risk'])).toBe('at-risk');
+    expect(rollupStatus(['done', 'done'])).toBe('done');
+    expect(rollupStatus(['on-track', 'done'])).toBe('on-track');
   });
 });
