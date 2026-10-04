@@ -63,7 +63,14 @@ export function authorizedAction<TInput, TResult>(
         return { ok: false, error: 'forbidden', message: 'You do not have access to do that.' };
       }
       const result = await config.handler({ viewer, input: parsed.data });
-      if (config.audit) await config.audit({ viewer, input: parsed.data, result });
+      if (config.audit) {
+        // The write has committed — an audit/log failure must not fail it (no false retry).
+        try {
+          await config.audit({ viewer, input: parsed.data, result });
+        } catch (auditError) {
+          logger('CORE').error({ err: auditError }, 'audit hook failed after a committed write');
+        }
+      }
       return { ok: true, data: result };
     } catch (error) {
       if (error instanceof AppError) {

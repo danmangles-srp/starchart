@@ -97,4 +97,18 @@ describe('authorizedAction', () => {
     );
     expect(await action({ title: 'Rock' })).toMatchObject({ ok: false, error: 'forbidden' });
   });
+
+  it('keeps a committed write successful when the audit hook throws', async () => {
+    const handler = vi.fn(async () => ({ id: 'x' }));
+    const audit = vi.fn(async () => {
+      throw new Error('audit boom');
+    });
+    const action = authorizedAction(
+      { schema, authorize: () => true, handler, audit },
+      { getViewer },
+    );
+    const result = await action({ title: 'Rock' });
+    expect(result).toMatchObject({ ok: true });
+    expect(handler).toHaveBeenCalledOnce();
+  });
 });
