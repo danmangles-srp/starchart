@@ -234,7 +234,7 @@ The backbone every module depends on. **ACs:** FR-1, FR-2 (+ FR-2.7).
   query never returns org B). `ACs:` FR-2.1, FR-2.2, FR-2.6, FR-2.7, FR-3.2 (AC-3.2.4 storage). `Inv:`
   INV-2, INV-4, INV-10, INV-11. `Deps:` T0.3. `Ask:` seed a demo org only, or also import the real
   100-person roster (CSV)?
-- **T1.3 — Authorization layer + `authorizedAction` seam.**
+- **COMPLETE (#10) · T1.3 — Authorization layer + `authorizedAction` seam.**
   `Build:` pure predicates `canReadTeam` (member **or** admin), `canEditTeam`, `isTeamLead`, `isAdmin`,
   `canManageOrg`; the `requireUser()` session helper; the **`authorizedAction` wrapper** (INV-1); and the
   data-access wrappers applying **org + team scoping in one place** (INV-2). Fully unit-tested against the
