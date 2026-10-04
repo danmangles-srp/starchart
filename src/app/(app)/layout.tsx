@@ -1,16 +1,15 @@
 import type { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth';
+import { requireUser } from '@/lib/auth/requireUser';
+import { listReadableTeams } from '@/features/org/data/teams';
 import AppShell from '@/components/AppShell';
 
 /**
- * Authed app shell layout. Every signed-in route is gated here: no session →
- * redirect to sign-in (FR-1.1 / FR-1.4). Team context wiring in T1.4.
+ * Authed app shell layout. No session → redirect to sign-in (FR-1.1/1.4); otherwise
+ * load the teams this viewer may read (Admin = all) for the switcher (FR-2.3).
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
-  const session = await auth();
-  if (!session?.user) {
-    redirect('/sign-in');
-  }
-  return <AppShell>{children}</AppShell>;
+  const viewer = await requireUser().catch(() => redirect('/sign-in'));
+  const teams = await listReadableTeams(viewer);
+  return <AppShell teams={teams}>{children}</AppShell>;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useParams } from 'next/navigation';
 import NextLink from 'next/link';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -29,6 +29,8 @@ import type { SvgIconProps } from '@mui/material/SvgIcon';
 import type { ComponentType } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
 import SignOutButton from '@/features/auth/components/SignOutButton';
+import TeamSwitcher from '@/features/org/components/TeamSwitcher';
+import type { TeamSummaryRow } from '@/features/org/domain/teams';
 import { MODULE_NAV, routes, type ModuleKey } from '@/lib/routes';
 
 const DRAWER_WIDTH = 260;
@@ -48,34 +50,20 @@ const MODULE_ICON: Record<ModuleKey, ComponentType<SvgIconProps>> = {
  */
 export default function AppShell({
   children,
-  activeTeamId = null,
+  teams = [],
 }: {
   children: ReactNode;
-  activeTeamId?: string | null;
+  teams?: TeamSummaryRow[];
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const params = useParams<{ teamId?: string }>();
+  const activeTeamId = typeof params?.teamId === 'string' ? params.teamId : null;
 
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ px: 2, py: 1.5 }}>
-        <Typography variant="overline" color="text.secondary">
-          Team
-        </Typography>
-        <Box
-          sx={{
-            mt: 0.5,
-            px: 1.5,
-            py: 1,
-            borderRadius: 1,
-            border: 1,
-            borderColor: 'divider',
-            color: 'text.secondary',
-            fontSize: 14,
-          }}
-        >
-          Team switcher (M1)
-        </Box>
+        <TeamSwitcher teams={teams} />
       </Box>
       <Divider />
       <List>
