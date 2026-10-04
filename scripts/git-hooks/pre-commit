@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# Fast pre-commit gate: types + lint + format (no tests, no build).
+set -e
+cd "$(git rev-parse --show-toplevel)"
+pnpm typecheck
+pnpm lint
+pnpm format:check
