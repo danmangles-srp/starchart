@@ -216,7 +216,7 @@ Leadership Team + 4 depts × 5 teams) exists as data; team context, team-scoped 
 role-scoped edit, org-scoped data-access, the **`authorizedAction` seam**, and the Admin area all work.
 The backbone every module depends on. **ACs:** FR-1, FR-2 (+ FR-2.7).
 
-- **T1.1 — Google + Microsoft sign-in & session.**
+- **COMPLETE (#9) · T1.1 — Google + Microsoft sign-in & session.**
   `Build:` Auth.js v5 + `@auth/prisma-adapter`, Google + Microsoft Entra ID providers, **server-side
   domain/tenant allowlist in the `signIn` callback**, **verified-email account-linking** (either provider
   → one user — enabled deliberately per AC-1.1.4, both IdPs verify email), **`Organization` resolved from
