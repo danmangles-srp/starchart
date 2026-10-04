@@ -1,8 +1,11 @@
+'use client';
+
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import ThemeToggle from '@/components/ThemeToggle';
+import Button from '@mui/material/Button';
+import NextLink from 'next/link';
 
-export default function Home() {
+export default function NotFound() {
   return (
     <Box
       sx={{
@@ -16,11 +19,15 @@ export default function Home() {
         textAlign: 'center',
       }}
     >
-      <ThemeToggle />
       <Typography variant="h3" component="h1">
-        Cadence
+        Page not found
       </Typography>
-      <Typography color="text.secondary">Foundation ready. Features land next.</Typography>
+      <Typography color="text.secondary" sx={{ maxWidth: 420 }}>
+        That page doesn&apos;t exist, or you don&apos;t have access to it.
+      </Typography>
+      <Button component={NextLink} href="/" variant="contained">
+        Back to My Week
+      </Button>
     </Box>
   );
 }

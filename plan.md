@@ -178,12 +178,12 @@ persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `main`
   (`next/core-web-vitals`, `@typescript-eslint`, ban `console.log`) + Prettier; base scripts; `git init`,
   `.gitignore`, `.env.example`. `Gate:` `pnpm build` + `pnpm lint` clean on the starter.
   `ACs:` infra. `Inv:` INV-11. `Deps:` none. `Ask:` —
-- **T0.2 — MUI theme system.**
+- **COMPLETE (#3) · T0.2 — MUI theme system.**
   `Build:` Material 3 CSS-vars theme (`extendTheme` + `CssVarsProvider`) seeded from `#1a73e8`, light +
   dark; type/spacing/radius/motion tokens; **`status → {color, icon, label}` map**; SSR-safe emotion
   cache; persisted light/dark/system toggle. No hardcoded visual values anywhere after this. `Gate:` token
   + status-map unit tests. `ACs:` FR-8.3, NFR-3.1. `Inv:` INV-6. `Deps:` T0.1. `Ask:` —
-- **T0.3 — Prisma + Postgres + env + logger.**
+- **COMPLETE (#4) · T0.3 — Prisma + Postgres + env + logger.**
   `Build:` Prisma init, Postgres connection, `lib/db` singleton, typed fail-fast `lib/env`, baseline
   migration, tagged `AppLogger` (pino) + `lib/time` (`AppClock` seam). `Gate:` DB round-trip test (test
   DB) + env-parse unit test. `ACs:` NFR-1.1, NFR-1.4, NFR-8.1. `Inv:` INV-3, INV-4, INV-11. `Deps:` T0.1.
