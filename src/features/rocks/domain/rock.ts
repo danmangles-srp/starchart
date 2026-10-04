@@ -40,6 +40,28 @@ export interface RockSummary {
   dueDate: string | null;
 }
 
+export interface RockMilestone {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  done: boolean;
+  order: number;
+}
+
+export interface RockDetail {
+  id: string;
+  title: string;
+  description: string | null;
+  ownerId: string;
+  level: RockLevel;
+  teamId: string | null;
+  fiscalYear: number;
+  quarterIndex: number;
+  status: RockStatus;
+  dueDate: string | null;
+  milestones: RockMilestone[];
+}
+
 /** `done/total` milestone progress (FR-3.3). */
 export function milestoneProgress(done: number, total: number): string {
   return `${done}/${total}`;

@@ -1,6 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
-import { NotFoundError } from '@/lib/auth/errors';
+import { AppError, NotFoundError } from '@/lib/auth/errors';
 import type { RockStatus } from '@/theme/status';
 import {
   toRockStatus,
@@ -8,6 +8,7 @@ import {
   type DbRockStatus,
   type RockLevel,
   type RockSummary,
+  type RockDetail,
 } from '../domain/rock';
 
 export interface QuarterRef {
@@ -58,6 +59,13 @@ export interface CreateRockInput {
 }
 
 export async function createRock(orgId: string, input: CreateRockInput, prisma: PrismaClient = db) {
+  // A TEAM rock belongs to a team; COMPANY/INDIVIDUAL rocks do not.
+  if (input.level === 'TEAM' && !input.teamId) {
+    throw new AppError('invalid-input', 'A team rock must have a team.');
+  }
+  if (input.level !== 'TEAM' && input.teamId) {
+    throw new AppError('invalid-input', 'Only team rocks can belong to a team.');
+  }
   return prisma.rock.create({
     data: {
       orgId,
@@ -87,11 +95,35 @@ export async function listTeamRocks(
   return rocks.map((r) => toSummary(r as unknown as RockRow));
 }
 
-export async function getRockDetail(orgId: string, rockId: string, prisma: PrismaClient = db) {
-  return prisma.rock.findFirst({
+export async function getRockDetail(
+  orgId: string,
+  rockId: string,
+  prisma: PrismaClient = db,
+): Promise<RockDetail | null> {
+  const rock = await prisma.rock.findFirst({
     where: { id: rockId, orgId },
     include: { milestones: { orderBy: { order: 'asc' } } },
   });
+  if (!rock) return null;
+  return {
+    id: rock.id,
+    title: rock.title,
+    description: rock.description,
+    ownerId: rock.ownerId,
+    level: rock.level as RockLevel,
+    teamId: rock.teamId,
+    fiscalYear: rock.fiscalYear,
+    quarterIndex: rock.quarterIndex,
+    status: toRockStatus(rock.status as DbRockStatus),
+    dueDate: rock.dueDate ? rock.dueDate.toISOString() : null,
+    milestones: rock.milestones.map((m) => ({
+      id: m.id,
+      title: m.title,
+      dueDate: m.dueDate ? m.dueDate.toISOString() : null,
+      done: m.done,
+      order: m.order,
+    })),
+  };
 }
 
 export async function setRockStatus(

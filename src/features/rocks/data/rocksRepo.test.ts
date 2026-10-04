@@ -74,7 +74,7 @@ describe.skipIf(!testUrl)('rocksRepo (Tier 2.5)', () => {
       prisma,
     );
     await setRockStatus(orgId, rock.id, 'at-risk', prisma);
-    expect((await getRockDetail(orgId, rock.id, prisma))?.status).toBe('AT_RISK');
+    expect((await getRockDetail(orgId, rock.id, prisma))?.status).toBe('at-risk');
 
     await expect(setRockStatus('other-org', rock.id, 'done', prisma)).rejects.toBeInstanceOf(
       NotFoundError,
