@@ -28,7 +28,7 @@ Opening a PR is outward-facing — show the user the title + body and **confirm 
 (unless they've already told you to ship without asking). Then:
 
 ```bash
-gh pr create --base dev --title "type(scope): description" --body-file <summary_file>
+gh pr create --base main --title "type(scope): description" --body-file <summary_file>
 ```
 
 Report the PR URL and the honest state: what's proven by the gate vs. what still needs human/device

@@ -24,7 +24,7 @@ Batch 1–4 questions, lead each with a Recommended option + one-line rationale.
 or requirements already answer.
 
 ## 3. Build (only after scope is confirmed)
-Run the loop from the `workflow` skill: branch off `dev` → failing test mapped to an AC (`testing`) →
+Run the loop from the `workflow` skill: branch off `main` → failing test mapped to an AC (`testing`) →
 minimum code to pass → refactor to `structure` → run `prisma generate` / a migration if the schema changed.
 
 ## 4. Self-review before you claim done
