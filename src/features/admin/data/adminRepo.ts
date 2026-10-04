@@ -21,8 +21,14 @@ export async function createTeam(
     });
     if (!dept) throw new NotFoundError('Department not found.');
   }
+  const count = await prisma.team.count({ where: { orgId } });
   return prisma.team.create({
-    data: { orgId, name: input.name, departmentId: input.departmentId ?? null },
+    data: {
+      orgId,
+      name: input.name,
+      departmentId: input.departmentId ?? null,
+      order: count + 1,
+    },
   });
 }
 

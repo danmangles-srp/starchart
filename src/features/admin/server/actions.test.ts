@@ -23,7 +23,7 @@ vi.mock('../data/adminRepo', () => ({
   getAdminOverview: vi.fn(),
 }));
 
-import { createTeamAction, archiveTeamAction } from './actions';
+import { createTeamAction, archiveTeamAction, setUserAdminAction } from './actions';
 import * as repo from '../data/adminRepo';
 import { logActivity } from '@/features/activity/data/activityLog';
 
@@ -53,5 +53,12 @@ describe('admin actions (server authorization)', () => {
     const result = await archiveTeamAction({ teamId: '' });
     expect(result).toMatchObject({ ok: false, error: 'invalid-input' });
     expect(repo.archiveTeam).not.toHaveBeenCalled();
+  });
+
+  it('blocks an admin from removing their own admin access', async () => {
+    viewer.current = admin; // id 'a'
+    const result = await setUserAdminAction({ userId: 'a', isAdmin: false });
+    expect(result).toMatchObject({ ok: false, error: 'forbidden' });
+    expect(repo.setUserAdmin).not.toHaveBeenCalled();
   });
 });

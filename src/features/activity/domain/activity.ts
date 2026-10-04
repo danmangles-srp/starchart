@@ -9,6 +9,7 @@ export const ACTIVITY_ACTIONS = {
   ROCK_STATUS_CHANGED: 'rock.status_changed',
   ISSUE_SOLVED: 'issue.solved',
   MEASURABLE_ARCHIVED: 'measurable.archived',
+  QUARTER_UPSERTED: 'quarter.upserted',
 } as const;
 
 export type ActivityAction = (typeof ACTIVITY_ACTIONS)[keyof typeof ACTIVITY_ACTIONS];
@@ -34,6 +35,7 @@ const LABELS: Record<string, string> = {
   'rock.status_changed': 'updated a Rock status',
   'issue.solved': 'solved an Issue',
   'measurable.archived': 'archived a measurable',
+  'quarter.upserted': 'updated a quarter definition',
 };
 
 /** Human phrase for an activity action; falls back to a readable form of the key. */

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { authorizedAction } from '@/lib/auth/authorizedAction';
 import { canManageOrg, type Viewer } from '@/lib/auth/permissions';
+import { ForbiddenError } from '@/lib/auth/errors';
 import { logActivity } from '@/features/activity/data/activityLog';
 import { ACTIVITY_ACTIONS } from '@/features/activity/domain/activity';
 import * as repo from '../data/adminRepo';
@@ -152,6 +153,10 @@ export const setUserAdminAction = authorizedAction({
   schema: S.SetUserAdminSchema,
   authorize: onlyAdmin,
   handler: async ({ viewer, input }) => {
+    // Prevent an admin from locking themselves out of org management.
+    if (input.userId === viewer.id && !input.isAdmin) {
+      throw new ForbiddenError('You cannot remove your own admin access.');
+    }
     await repo.setUserAdmin(viewer.orgId, input.userId, input.isAdmin);
     revalidateOrg();
     return { userId: input.userId };
@@ -174,4 +179,12 @@ export const upsertQuarterAction = authorizedAction({
     revalidateOrg();
     return { id: quarter.id };
   },
+  audit: ({ viewer, input }) =>
+    logActivity({
+      orgId: viewer.orgId,
+      actorId: viewer.id,
+      action: ACTIVITY_ACTIONS.QUARTER_UPSERTED,
+      targetType: 'quarter',
+      targetId: `${input.fiscalYear}-Q${input.index}`,
+    }),
 });
