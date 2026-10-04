@@ -194,7 +194,7 @@ persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `main`
   helper** (`/t/[teamId]/…`); placeholder module pages; app-wide not-found + error boundary. `Gate:`
   component tests (shell + each placeholder; drawer toggle; route builder). `ACs:` FR-2.3 (shell),
   NFR-7.2, NFR-9.1. `Inv:` INV-7, INV-8. `Deps:` T0.2. `Ask:` —
-- **T0.5 — Gate, CI & test infra.**
+- **COMPLETE (#6) · T0.5 — Gate, CI & test infra.**
   `Build:` `scripts/gate.sh` (+ the ≥80% logic-surface coverage thresholds in Vitest config); Vitest +
   Testing Library config; **a transactional test-DB harness + test-data factories**; Playwright config +
   one smoke E2E; GitHub Actions running the gate on PRs to `main`; git hooks + `install-hooks.sh`;
