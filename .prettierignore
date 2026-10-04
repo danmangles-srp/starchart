@@ -1,0 +1,16 @@
+# Build output / deps
+.next
+out
+build
+coverage
+node_modules
+pnpm-lock.yaml
+
+# Generated
+next-env.d.ts
+
+# Project docs keep their own hand-tuned wrapping
+*.md
+
+# Static assets
+public
