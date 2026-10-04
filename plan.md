@@ -155,7 +155,7 @@ the PR.** Don't re-ask a resolved decision.
 
 | Milestone | State |
 | --- | --- |
-| M0 Foundation, app shell & shared primitives | **NEXT** |
+| M0 Foundation, app shell & shared primitives | **IN PROGRESS** |
 | M1 Identity, Org, Teams & RBAC | PLANNED |
 | M2 Rocks | PLANNED |
 | M3 Data / Scorecard | PLANNED |
@@ -173,7 +173,7 @@ app shell, the **shared primitives every later ticket reuses**, and a green gate
 or auth lands. **Exit:** `sh scripts/gate.sh` = 0 on the empty app; the shell renders light/dark with a
 persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `main`; a Vercel preview deploys.
 
-- **T0.1 — Repo & toolchain bootstrap.**
+- **COMPLETE (#2) · T0.1 — Repo & toolchain bootstrap.**
   `Build:` pnpm + Next.js (App Router, TS strict, `noUncheckedIndexedAccess`) + ESLint
   (`next/core-web-vitals`, `@typescript-eslint`, ban `console.log`) + Prettier; base scripts; `git init`,
   `.gitignore`, `.env.example`. `Gate:` `pnpm build` + `pnpm lint` clean on the starter.
