@@ -188,7 +188,7 @@ persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `main`
   migration, tagged `AppLogger` (pino) + `lib/time` (`AppClock` seam). `Gate:` DB round-trip test (test
   DB) + env-parse unit test. `ACs:` NFR-1.1, NFR-1.4, NFR-8.1. `Inv:` INV-3, INV-4, INV-11. `Deps:` T0.1.
   `Ask:` —
-- **T0.4 — App shell, navigation & route contract.**
+- **COMPLETE (#5) · T0.4 — App shell, navigation & route contract.**
   `Build:` authed `(app)` route group layout — left drawer (team-switcher slot + module nav), app bar
   (title, search/quarter/week/profile slots, theme toggle), responsive collapse; **the INV-8 route
   helper** (`/t/[teamId]/…`); placeholder module pages; app-wide not-found + error boundary. `Gate:`

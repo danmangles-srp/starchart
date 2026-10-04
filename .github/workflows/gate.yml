@@ -1,0 +1,61 @@
+name: gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: cadence_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/cadence_test
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/cadence_test
+      AUTH_SECRET: ci-placeholder-secret
+      AUTH_GOOGLE_ID: ci
+      AUTH_GOOGLE_SECRET: ci
+      AUTH_MICROSOFT_ENTRA_ID_ID: ci
+      AUTH_MICROSOFT_ENTRA_ID_SECRET: ci
+      AUTH_MICROSOFT_ENTRA_ID_TENANT_ID: ci
+      ALLOWED_EMAIL_DOMAINS: example.com
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.9.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: sh scripts/gate.sh
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.9.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
