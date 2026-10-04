@@ -242,7 +242,7 @@ The backbone every module depends on. **ACs:** FR-1, FR-2 (+ FR-2.7).
   `authorizedAction` test (rejects bad Zod, rejects unauthorized, logs on success). `ACs:` FR-1.2, FR-2.7,
   NFR-1.2, NFR-1.3, NFR-1.5, NFR-4.1. `Inv:` INV-1, INV-2, INV-3. `Deps:` T1.1, T1.2. `Ask:` confirm "any
   member of a team may edit that team's Issues/Todos/Scorecard entries" (structure = Lead/Admin).
-- **T1.4 — Team switcher & context.**
+- **COMPLETE (#11) · T1.4 — Team switcher & context.**
   `Build:` left-drawer switcher listing the user's teams (Admin sees all), grouped by department,
   Leadership pinned; active team persisted per user + encoded in the route (INV-8); an unreadable team
   isn't listed and a direct link → not-found. `Gate:` component tests (grouping, active state, non-member
