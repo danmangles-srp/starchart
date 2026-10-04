@@ -20,6 +20,7 @@ type RockRow = {
   id: string;
   title: string;
   ownerId: string;
+  owner: { name: string | null; email: string };
   level: RockLevel;
   teamId: string | null;
   fiscalYear: number;
@@ -34,6 +35,7 @@ function toSummary(r: RockRow): RockSummary {
     id: r.id,
     title: r.title,
     ownerId: r.ownerId,
+    ownerName: r.owner.name ?? r.owner.email,
     level: r.level,
     teamId: r.teamId,
     fiscalYear: r.fiscalYear,
@@ -45,7 +47,10 @@ function toSummary(r: RockRow): RockSummary {
   };
 }
 
-const withMilestones = { milestones: { select: { done: true } } } as const;
+const withMilestones = {
+  milestones: { select: { done: true } },
+  owner: { select: { name: true, email: true } },
+} as const;
 
 export interface CreateRockInput {
   title: string;
@@ -102,7 +107,10 @@ export async function getRockDetail(
 ): Promise<RockDetail | null> {
   const rock = await prisma.rock.findFirst({
     where: { id: rockId, orgId },
-    include: { milestones: { orderBy: { order: 'asc' } } },
+    include: {
+      milestones: { orderBy: { order: 'asc' } },
+      owner: { select: { name: true, email: true } },
+    },
   });
   if (!rock) return null;
   return {
@@ -110,6 +118,7 @@ export async function getRockDetail(
     title: rock.title,
     description: rock.description,
     ownerId: rock.ownerId,
+    ownerName: rock.owner.name ?? rock.owner.email,
     level: rock.level as RockLevel,
     teamId: rock.teamId,
     fiscalYear: rock.fiscalYear,

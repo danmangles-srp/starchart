@@ -272,7 +272,7 @@ quarter selector (org-configurable), and company→team roll-up. **ACs:** FR-3 (
   (companyRockId ↔ teamRockId); migration + scoped data-access; **expose `myItemsFor`/`teamSummary`**
   (INV-9). `Gate:` repository + scoping tests. `ACs:` FR-3.1–3.4, NFR-1.3. `Inv:` INV-2, INV-9. `Deps:`
   T1.3. `Ask:` —
-- **T2.2 — Rocks domain (pure).**
+- **COMPLETE (#15) · T2.2 — Rocks domain (pure).**
   `Build:` **quarter resolution from `QuarterDefinition`s with calendar fallback** (current quarter,
   quarter list, **quarter-closed** check), status model, milestone progress, company→team status roll-up.
   `Gate:` domain unit tests — quarter boundaries for **calendar and a custom fiscal year**, closed check,
