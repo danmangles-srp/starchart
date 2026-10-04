@@ -155,8 +155,8 @@ the PR.** Don't re-ask a resolved decision.
 
 | Milestone | State |
 | --- | --- |
-| M0 Foundation, app shell & shared primitives | **IN PROGRESS** |
-| M1 Identity, Org, Teams & RBAC | PLANNED |
+| M0 Foundation, app shell & shared primitives | **COMPLETE** |
+| M1 Identity, Org, Teams & RBAC | **IN PROGRESS** |
 | M2 Rocks | PLANNED |
 | M3 Data / Scorecard | PLANNED |
 | M4 Todos | PLANNED |
@@ -200,7 +200,7 @@ persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `main`
   one smoke E2E; GitHub Actions running the gate on PRs to `main`; git hooks + `install-hooks.sh`;
   `prisma/seed.ts` scaffold. `Gate:` the gate runs green in CI. `ACs:` NFR-6.4. `Inv:` INV-3, INV-11.
   `Deps:` T0.3, T0.4. `Ask:` —
-- **T0.6 — Shared primitives & client-data layer.**
+- **COMPLETE (#7) · T0.6 — Shared primitives & client-data layer.**
   `Build:` state components (`LoadingState`/`EmptyState`/`ErrorState`/`NotFound`), the **`StatusChip`**
   primitive (from T0.2's map), `lib/query` (TanStack Query client + centralized keys) wired SSR-safe, and
   the **`useOptimisticMutation`** helper (snapshot → rollback+retry → invalidate). `Gate:` component tests

@@ -1,18 +1,13 @@
 /**
- * Database seed. The real seed (one Organization, a Leadership team + 4 departments
- * x 5 teams, demo users/memberships, and calendar quarter definitions) lands with
- * the schema in M1 (T1.2). For now this is a wired no-op so `pnpm prisma db seed`
- * works from day one.
+ * Database seed runner. The seed logic lives in src so it is unit-testable and
+ * coverage-counted; this just wires it to a PrismaClient for `pnpm prisma db seed`.
  */
 import { PrismaClient } from '@prisma/client';
+import { seed } from '../src/features/org/data/seed';
 
 const prisma = new PrismaClient();
 
-async function main(): Promise<void> {
-  // Seed data added in T1.2 once the domain models exist.
-}
-
-main()
+seed(prisma)
   .then(() => prisma.$disconnect())
   .catch((error: unknown) => {
     process.exitCode = 1;
