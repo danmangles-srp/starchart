@@ -278,7 +278,7 @@ quarter selector (org-configurable), and company→team roll-up. **ACs:** FR-3 (
   `Gate:` domain unit tests — quarter boundaries for **calendar and a custom fiscal year**, closed check,
   rollup, progress. `ACs:` FR-3.2 (incl. AC-3.2.3, AC-3.2.4), FR-3.3, FR-3.4. `Inv:` INV-3, INV-4.
   `Deps:` none. `Ask:` —
-- **T2.3 — Rocks list + quarter selector + filters.**
+- **COMPLETE (#16) · T2.3 — Rocks list + quarter selector + filters.**
   `Build:` team Rocks for the selected quarter — owner, `StatusChip`, milestone progress; filter by
   owner/status/level; **quarter selector (driven by definitions)** in the app bar, default current; four
   states. `Gate:` component tests per state + filter. `ACs:` FR-3.5, FR-7.3, NFR-9.1. `Inv:` INV-6,

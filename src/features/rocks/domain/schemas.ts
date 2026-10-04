@@ -1,0 +1,22 @@
+import { z } from 'zod';
+
+export const CreateRockSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(2000).optional(),
+  ownerId: z.string().min(1),
+  level: z.enum(['COMPANY', 'TEAM', 'INDIVIDUAL']),
+  teamId: z.string().min(1).nullable().optional(),
+  fiscalYear: z.number().int().min(2000).max(2100),
+  quarterIndex: z.number().int().min(1).max(4),
+  dueDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
+export const UpdateRockStatusSchema = z.object({
+  rockId: z.string().min(1),
+  status: z.enum(['on-track', 'at-risk', 'off-track', 'done']),
+});
+
+export type CreateRockInput = z.infer<typeof CreateRockSchema>;
