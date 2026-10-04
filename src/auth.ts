@@ -5,7 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import type { Adapter, AdapterUser } from 'next-auth/adapters';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
-import { parseAllowedDomains, isSignInAllowed } from '@/lib/auth/access';
+import { parseAllowedDomains, isSignInAllowed, emailDomain } from '@/lib/auth/access';
 import { getOrCreateDefaultOrg } from '@/features/org/data/resolveOrg';
 
 const allowedDomains = parseAllowedDomains(process.env.ALLOWED_EMAIL_DOMAINS);
@@ -59,10 +59,15 @@ export const authConfig: NextAuthConfig = {
         { allowedDomains, allowedTenantId },
       );
       if (!allowed) {
-        logger('AUTH').warn({ provider: account?.provider }, 'sign-in denied by policy');
+        logger('AUTH').warn(
+          { provider: account?.provider, domain: email ? emailDomain(email) : null },
+          'sign-in denied by policy',
+        );
       }
       return allowed;
     },
+    // Depends on session.strategy === 'database' (set above): `user` is the DB row,
+    // the source of orgId/isAdmin for read-scoping. Do not switch to 'jwt' without reworking this.
     session: ({ session, user }) => {
       if (session.user) {
         session.user.id = user.id;

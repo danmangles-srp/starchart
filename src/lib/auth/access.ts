@@ -46,7 +46,10 @@ export interface SignInPolicy {
  */
 export function isSignInAllowed(attempt: SignInAttempt, policy: SignInPolicy): boolean {
   if (!isEmailDomainAllowed(attempt.email, policy.allowedDomains)) return false;
-  if (attempt.provider === 'microsoft-entra-id' && policy.allowedTenantId) {
+  if (attempt.provider === 'microsoft-entra-id') {
+    // Microsoft is tenant-restricted (FR-2.7 / NFR-4.1): fail closed — require a
+    // configured tenant AND a matching tid, never fall back to multi-tenant "common".
+    if (!policy.allowedTenantId) return false;
     return attempt.tenantId === policy.allowedTenantId;
   }
   return true;

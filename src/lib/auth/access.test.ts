@@ -59,12 +59,12 @@ describe('isSignInAllowed', () => {
       ),
     ).toBe(false);
   });
-  it('skips the tenant check when no tenant is configured', () => {
+  it('fails closed for Microsoft when no tenant is configured', () => {
     expect(
       isSignInAllowed(
-        { email: 'dan@srpsoftware.com', provider: 'microsoft-entra-id', tenantId: null },
+        { email: 'dan@srpsoftware.com', provider: 'microsoft-entra-id', tenantId: 'tenant-1' },
         { allowedDomains: ['srpsoftware.com'] },
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 });
