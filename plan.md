@@ -156,8 +156,8 @@ the PR.** Don't re-ask a resolved decision.
 | Milestone | State |
 | --- | --- |
 | M0 Foundation, app shell & shared primitives | **COMPLETE** |
-| M1 Identity, Org, Teams & RBAC | **IN PROGRESS** |
-| M2 Rocks | PLANNED |
+| M1 Identity, Org, Teams & RBAC | **COMPLETE** |
+| M2 Rocks | **IN PROGRESS** |
 | M3 Data / Scorecard | PLANNED |
 | M4 Todos | PLANNED |
 | M5 Issues (incl. solve → convert) | PLANNED |
@@ -247,7 +247,7 @@ The backbone every module depends on. **ACs:** FR-1, FR-2 (+ FR-2.7).
   Leadership pinned; active team persisted per user + encoded in the route (INV-8); an unreadable team
   isn't listed and a direct link → not-found. `Gate:` component tests (grouping, active state, non-member
   link refused, admin-sees-all). `ACs:` FR-2.3, FR-2.4. `Inv:` INV-7, INV-8. `Deps:` T1.3, T0.4. `Ask:` —
-- **T1.5 — Admin area.**
+- **COMPLETE (#13) · T1.5 — Admin area.**
   `Build:` manage departments & teams (create/rename/**archive**), users list, memberships, role
   assignment, **and the org's quarter/fiscal definitions** (each quarter's start/end, calendar default);
   confirm dialogs on destructive actions; all writes via `authorizedAction` (→ activity log). Admin-only.

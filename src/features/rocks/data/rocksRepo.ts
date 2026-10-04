@@ -1,0 +1,155 @@
+import type { PrismaClient } from '@prisma/client';
+import { db } from '@/lib/db';
+import { NotFoundError } from '@/lib/auth/errors';
+import type { RockStatus } from '@/theme/status';
+import {
+  toRockStatus,
+  toDbRockStatus,
+  type DbRockStatus,
+  type RockLevel,
+  type RockSummary,
+} from '../domain/rock';
+
+export interface QuarterRef {
+  fiscalYear: number;
+  quarterIndex: number;
+}
+
+type RockRow = {
+  id: string;
+  title: string;
+  ownerId: string;
+  level: RockLevel;
+  teamId: string | null;
+  fiscalYear: number;
+  quarterIndex: number;
+  status: DbRockStatus;
+  dueDate: Date | null;
+  milestones: { done: boolean }[];
+};
+
+function toSummary(r: RockRow): RockSummary {
+  return {
+    id: r.id,
+    title: r.title,
+    ownerId: r.ownerId,
+    level: r.level,
+    teamId: r.teamId,
+    fiscalYear: r.fiscalYear,
+    quarterIndex: r.quarterIndex,
+    status: toRockStatus(r.status),
+    milestonesDone: r.milestones.filter((m) => m.done).length,
+    milestonesTotal: r.milestones.length,
+    dueDate: r.dueDate ? r.dueDate.toISOString() : null,
+  };
+}
+
+const withMilestones = { milestones: { select: { done: true } } } as const;
+
+export interface CreateRockInput {
+  title: string;
+  description?: string | null;
+  ownerId: string;
+  level: RockLevel;
+  teamId?: string | null;
+  fiscalYear: number;
+  quarterIndex: number;
+  dueDate?: Date | null;
+}
+
+export async function createRock(orgId: string, input: CreateRockInput, prisma: PrismaClient = db) {
+  return prisma.rock.create({
+    data: {
+      orgId,
+      title: input.title,
+      description: input.description ?? null,
+      ownerId: input.ownerId,
+      level: input.level,
+      teamId: input.teamId ?? null,
+      fiscalYear: input.fiscalYear,
+      quarterIndex: input.quarterIndex,
+      dueDate: input.dueDate ?? null,
+    },
+  });
+}
+
+export async function listTeamRocks(
+  orgId: string,
+  teamId: string,
+  quarter: QuarterRef,
+  prisma: PrismaClient = db,
+): Promise<RockSummary[]> {
+  const rocks = await prisma.rock.findMany({
+    where: { orgId, teamId, fiscalYear: quarter.fiscalYear, quarterIndex: quarter.quarterIndex },
+    include: withMilestones,
+    orderBy: { createdAt: 'asc' },
+  });
+  return rocks.map((r) => toSummary(r as unknown as RockRow));
+}
+
+export async function getRockDetail(orgId: string, rockId: string, prisma: PrismaClient = db) {
+  return prisma.rock.findFirst({
+    where: { id: rockId, orgId },
+    include: { milestones: { orderBy: { order: 'asc' } } },
+  });
+}
+
+export async function setRockStatus(
+  orgId: string,
+  rockId: string,
+  status: RockStatus,
+  prisma: PrismaClient = db,
+): Promise<void> {
+  const res = await prisma.rock.updateMany({
+    where: { id: rockId, orgId },
+    data: { status: toDbRockStatus(status) },
+  });
+  if (res.count === 0) throw new NotFoundError('Rock not found.');
+}
+
+/** INV-9: a person's rocks for a quarter (consumed by My Week, M6). */
+export async function myRocksFor(
+  orgId: string,
+  ownerId: string,
+  quarter: QuarterRef,
+  prisma: PrismaClient = db,
+): Promise<RockSummary[]> {
+  const rocks = await prisma.rock.findMany({
+    where: { orgId, ownerId, fiscalYear: quarter.fiscalYear, quarterIndex: quarter.quarterIndex },
+    include: withMilestones,
+    orderBy: { createdAt: 'asc' },
+  });
+  return rocks.map((r) => toSummary(r as unknown as RockRow));
+}
+
+export interface TeamRockCounts {
+  total: number;
+  onTrack: number;
+  atRisk: number;
+  offTrack: number;
+  done: number;
+}
+
+/** INV-9: on-track/at-risk/off-track/done counts for a team's quarter (team dashboard, M6). */
+export async function teamRockSummary(
+  orgId: string,
+  teamId: string,
+  quarter: QuarterRef,
+  prisma: PrismaClient = db,
+): Promise<TeamRockCounts> {
+  const grouped = await prisma.rock.groupBy({
+    by: ['status'],
+    where: { orgId, teamId, fiscalYear: quarter.fiscalYear, quarterIndex: quarter.quarterIndex },
+    _count: { _all: true },
+  });
+  const counts: TeamRockCounts = { total: 0, onTrack: 0, atRisk: 0, offTrack: 0, done: 0 };
+  for (const row of grouped) {
+    const n = row._count._all;
+    counts.total += n;
+    if (row.status === 'ON_TRACK') counts.onTrack = n;
+    else if (row.status === 'AT_RISK') counts.atRisk = n;
+    else if (row.status === 'OFF_TRACK') counts.offTrack = n;
+    else if (row.status === 'DONE') counts.done = n;
+  }
+  return counts;
+}
