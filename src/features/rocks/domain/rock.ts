@@ -66,3 +66,16 @@ export interface RockDetail {
 export function milestoneProgress(done: number, total: number): string {
   return `${done}/${total}`;
 }
+
+/**
+ * Roll a Company Rock's status up from its supporting Team Rocks (FR-3.4):
+ * worst-case wins — any off-track → off-track, else any at-risk → at-risk,
+ * all done → done, otherwise on-track. No children → on-track.
+ */
+export function rollupStatus(childStatuses: RockStatus[]): RockStatus {
+  if (childStatuses.length === 0) return 'on-track';
+  if (childStatuses.includes('off-track')) return 'off-track';
+  if (childStatuses.includes('at-risk')) return 'at-risk';
+  if (childStatuses.every((s) => s === 'done')) return 'done';
+  return 'on-track';
+}

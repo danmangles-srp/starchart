@@ -1,20 +1,11 @@
 import { PrismaClient, TeamRole } from '@prisma/client';
+import { calendarQuarters } from '@/lib/time';
+
+// Re-exported so existing importers (and tests) keep their import path.
+export { calendarQuarters };
 
 export const DEPARTMENTS = ['Sales', 'Marketing', 'Product', 'Operations'] as const;
 export const TEAMS_PER_DEPARTMENT = 5;
-
-/** Calendar quarters (Q1 = Jan–Mar) for a year — the default quarter definitions (AC-3.2.4). */
-export function calendarQuarters(year: number) {
-  return [1, 2, 3, 4].map((index) => {
-    const startMonth = (index - 1) * 3;
-    return {
-      index,
-      label: `Q${index} ${year}`,
-      startsOn: new Date(Date.UTC(year, startMonth, 1)),
-      endsOn: new Date(Date.UTC(year, startMonth + 3, 0)),
-    };
-  });
-}
 
 /**
  * Idempotent demo seed: one Organization, a Leadership team + 4 departments x 5
