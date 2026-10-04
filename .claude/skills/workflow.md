@@ -18,9 +18,9 @@ the product. Working code that solved the wrong problem is a failure, not a near
    `plan.md`). Restate in 1–2 lines what you're about to build and what's explicitly out of scope, and
    **confirm + resolve ambiguity with the user before coding** (batched questions — see "How to ask
    well"). The ACs are the definition of done.
-2. **Branch.** `<type>/t<n>-<slug>` off `dev` (per `plan.md` — e.g. `feat/t2-1-rocks-schema`). **PRs
-   target `dev`, NEVER `main`** — `main` is release-only. If `origin/dev` is missing/stale, **recreate or
-   refresh it** from the local `dev` tip or ask — do **not** retarget the PR to `main`.
+2. **Branch.** `<type>/t<n>-<slug>` off `main` (e.g. `feat/t2-1-rocks-schema`). **PRs target `main`** —
+   `main` is the trunk; every feature branch merges back via PR. Releases are cut from `main`
+   occasionally as **GitHub Releases** (tags). There is no long-lived `dev` branch.
 3. **Test (red).** Write a failing test mapped to an AC. See `testing.md`.
 4. **Code (green).** Implement the minimum to pass; run `prisma generate` / `migrate dev` if you touched
    the schema.
@@ -117,7 +117,7 @@ context rationalizes. Don't grade your own homework with the same pen.
 
 - **Only force-push after a rebase** — don't amend/override old commits unless necessary.
 - **Prefer additive commits** to address review (e.g. `fix(rocks): address review`); PR commits squash on
-  merge to `dev`.
+  merge to `main`.
 - Commit or push only when the user has asked or the task plainly calls for it. If you're on the default
   branch, branch first.
 
@@ -187,7 +187,7 @@ behaviour — not "tests pass". Lead with the golden path, then edge cases. Exam
 ```
 
 ### Never merge without (hard gate — even when merging autonomously)
-1. **PR base is `dev`** — never `main`. Confirm the `--base` flag before opening/merging.
+1. **PR base is `main`** (the trunk). Confirm the `--base` flag before opening/merging.
 2. `/code-review` **run** on the diff, findings addressed.
 3. A filled **"How to verify"** section with concrete browser steps + an explicit "not covered" list.
 4. Full `sh scripts/gate.sh` PASS (typecheck + lint + format + tests + coverage floor + build).

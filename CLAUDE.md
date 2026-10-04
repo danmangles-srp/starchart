@@ -22,7 +22,7 @@ conversation.
    four modules — **Rocks, Data/Scorecard, Issues, Todos** — plus identity/org, the personal home, and
    per-team dashboards. Do not add a fifth module.
 2. **`plan.md`** — the ordered HOW: **eight milestones** (M0 Foundation → M7 Polish). Execute in
-   milestone order; within a milestone, each **ticket = 1 PR** off `dev`. Don't start the next milestone
+   milestone order; within a milestone, each **ticket = 1 PR** off `main`. Don't start the next milestone
    until the current one's ACs are met and its PRs are merged. The "Plan of Attack" board says what's
    next.
 3. **Skills below** — standards for every step; consult the relevant skill before acting. The skills are
@@ -96,8 +96,8 @@ conversation.
   explicit start/end dates, set per Organization by an Admin, **defaulting to calendar quarters**
   (Q1 = Jan–Mar) when unset (so a non-calendar fiscal year is data, not code). Scorecard/Todos use
   **ISO weeks, Monday start**; store UTC, display in the viewer's timezone.
-- **Loop**: Confirm scope + ask (requirements/plan AC) → branch off `dev` → test (red) → code (green) →
-  refactor → self-review (`/code-review` + `/design-review`) → gate → check in → commit → PR to `dev`.
+- **Loop**: Confirm scope + ask (requirements/plan AC) → branch off `main` → test (red) → code (green) →
+  refactor → self-review (`/code-review` + `/design-review`) → gate → check in → commit → PR to `main`.
 - **Validate** — **Standard Gate** `sh scripts/gate.sh` (typecheck → lint → format check → `vitest run
   --coverage` with the **≥80% logic-coverage floor** → `next build`). Identical to the `pre-push` hook.
   Run before every push; never gate on a scoped test path (coverage instruments the whole logic surface).

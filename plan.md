@@ -5,7 +5,7 @@
 > departments of 5 teams each.
 >
 > **Restart here:** the [Plan of Attack](#plan-of-attack-restart-here) is the single source of truth for
-> **what is done** and **what to do next**. One **ticket = 1 PR** off `dev`, in dependency order; don't
+> **what is done** and **what to do next**. One **ticket = 1 PR** off `main`, in dependency order; don't
 > start the next until the current one's gate exits `0` and its PR is open.
 >
 > **Read first, in order:** [Architecture decisions](#architecture-decisions) →
@@ -122,8 +122,8 @@ Per ticket:
 1. **Frame.** Read the ticket + its ACs in `requirements.md`. If the ticket's **`Ask`** is not `—` and is
    unresolved, **ask it first** (batched, recommended option led) before coding. Restate scope +
    out-of-scope in the PR.
-2. **Branch** `<type>/t<n>-<slug>` off `dev` (e.g. `feat/t2-1-rocks-schema`). PRs target **`dev`, never
-   `main`**.
+2. **Branch** `<type>/t<n>-<slug>` off `main` (e.g. `feat/t2-1-rocks-schema`). PRs target **`main`** (the
+   trunk); releases are cut from `main` as **GitHub Releases**. No long-lived `dev` branch.
 3. **Contracts first → inward-out.** Build in this order; **UI never precedes a settled schema/domain**:
    **Prisma schema + migration → domain types + Zod + pure logic (red→green) → `data/` (DB tests,
    scoping) → server actions via `authorizedAction` → UI (component tests, four states) → wire optimism.**
@@ -133,7 +133,7 @@ Per ticket:
    `next build`). **Never** gate on a scoped test path.
 6. **Definition of done.** Gate `0` **and** the ticket's ACs are demoable **and** a "How to verify"
    (concrete browser steps + an explicit *not covered by the gate* list) is written.
-7. **PR → `dev`**, Conventional Commits (lowercase, no emoji, no Co-authored-by), migrations committed;
+7. **PR → `main`**, Conventional Commits (lowercase, no emoji, no Co-authored-by), migrations committed;
    squash-merge; mark the ticket **`COMPLETE (#PR)`** on the board.
 
 **Ask-policy (autonomy bounds).** Ask only for: (a) the ticket's declared `Ask`; (b) a *new* product /
@@ -149,7 +149,7 @@ the PR.** Don't re-ask a resolved decision.
 ## Plan of Attack (restart here)
 
 > Status as of **2026-10-04**. Greenfield — nothing built yet. Execute top-down; one ticket = one PR off
-> `dev`.
+> `main`.
 
 ### Status board
 
@@ -171,12 +171,12 @@ the PR.** Don't re-ask a resolved decision.
 **Objective:** a building, type-checked, test-covered Next.js skeleton — MUI theme, Prisma/Postgres, the
 app shell, the **shared primitives every later ticket reuses**, and a green gate + CI — before any feature
 or auth lands. **Exit:** `sh scripts/gate.sh` = 0 on the empty app; the shell renders light/dark with a
-persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `dev`; a Vercel preview deploys.
+persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `main`; a Vercel preview deploys.
 
 - **T0.1 — Repo & toolchain bootstrap.**
   `Build:` pnpm + Next.js (App Router, TS strict, `noUncheckedIndexedAccess`) + ESLint
   (`next/core-web-vitals`, `@typescript-eslint`, ban `console.log`) + Prettier; base scripts; `git init`,
-  `dev` branch, `.gitignore`, `.env.example`. `Gate:` `pnpm build` + `pnpm lint` clean on the starter.
+  `.gitignore`, `.env.example`. `Gate:` `pnpm build` + `pnpm lint` clean on the starter.
   `ACs:` infra. `Inv:` INV-11. `Deps:` none. `Ask:` —
 - **T0.2 — MUI theme system.**
   `Build:` Material 3 CSS-vars theme (`extendTheme` + `CssVarsProvider`) seeded from `#1a73e8`, light +
@@ -197,7 +197,7 @@ persisted toggle; a Playwright smoke loads it; CI runs the gate on PRs to `dev`;
 - **T0.5 — Gate, CI & test infra.**
   `Build:` `scripts/gate.sh` (+ the ≥80% logic-surface coverage thresholds in Vitest config); Vitest +
   Testing Library config; **a transactional test-DB harness + test-data factories**; Playwright config +
-  one smoke E2E; GitHub Actions running the gate on PRs to `dev`; git hooks + `install-hooks.sh`;
+  one smoke E2E; GitHub Actions running the gate on PRs to `main`; git hooks + `install-hooks.sh`;
   `prisma/seed.ts` scaffold. `Gate:` the gate runs green in CI. `ACs:` NFR-6.4. `Inv:` INV-3, INV-11.
   `Deps:` T0.3, T0.4. `Ask:` —
 - **T0.6 — Shared primitives & client-data layer.**
