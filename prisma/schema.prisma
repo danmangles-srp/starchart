@@ -1,0 +1,12 @@
+// Cadence — Prisma schema. PostgreSQL is the single source of truth (NFR-1.1).
+// Domain models (Organization, User, Team, …) arrive in T1.2; this ticket (T0.3)
+// establishes the Prisma + Postgres connection and the generated client.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
