@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import NextLink from 'next/link';
+import { routes } from '@/lib/routes';
 
 export default function NotFound() {
   return (
@@ -25,7 +26,7 @@ export default function NotFound() {
       <Typography color="text.secondary" sx={{ maxWidth: 420 }}>
         That page doesn&apos;t exist, or you don&apos;t have access to it.
       </Typography>
-      <Button component={NextLink} href="/" variant="contained">
+      <Button component={NextLink} href={routes.home()} variant="contained">
         Back to My Week
       </Button>
     </Box>
