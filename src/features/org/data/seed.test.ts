@@ -28,7 +28,7 @@ describe.skipIf(!testUrl)('org seed + org scoping (Tier 2.5)', () => {
     await seed(prisma, 2026);
     const first = await prisma.organization.findUniqueOrThrow({
       where: { slug: 'cadence' },
-      include: { teams: true, quarterDefinitions: true },
+      include: { teams: true, quarterDefinitions: { where: { fiscalYear: 2026 } } },
     });
     expect(first.teams).toHaveLength(expectedTeams);
     expect(first.quarterDefinitions).toHaveLength(4);
