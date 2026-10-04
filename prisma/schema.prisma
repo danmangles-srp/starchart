@@ -1,6 +1,7 @@
 // Cadence — Prisma schema. PostgreSQL is the single source of truth (NFR-1.1).
-// Domain models (Organization, User, Team, …) arrive in T1.2; this ticket (T0.3)
-// establishes the Prisma + Postgres connection and the generated client.
+// Org-ready tenancy (FR-2.7): every domain table carries orgId; the data-access
+// layer (T1.3) scopes every query by it. Auth.js adapter tables (Account, Session,
+// VerificationToken) are auth plumbing reachable via User.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,4 +10,183 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum TeamRole {
+  LEAD
+  MEMBER
+}
+
+/// The tenant. v1 runs one Organization; the schema is ready for more.
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users              User[]
+  departments        Department[]
+  teams              Team[]
+  memberships        Membership[]
+  activityLogs       ActivityLog[]
+  quarterDefinitions QuarterDefinition[]
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  isAdmin       Boolean   @default(false)
+  jobTitle      String?
+  homeTeamId    String?
+  orgId         String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  org          Organization  @relation(fields: [orgId], references: [id])
+  homeTeam     Team?         @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: SetNull)
+  memberships  Membership[]
+  accounts     Account[]
+  sessions     Session[]
+  activityLogs ActivityLog[] @relation("ActorActivity")
+
+  @@index([orgId])
+  @@index([homeTeamId])
+}
+
+// --- Auth.js (NextAuth v5) Prisma adapter models ---
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Org structure ---
+
+/// A grouping/filter over teams. Not its own module workspace.
+model Department {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  teams Team[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+/// A team workspace running all four modules. Leadership has no department.
+model Team {
+  id           String    @id @default(cuid())
+  orgId        String
+  name         String
+  departmentId String?
+  isLeadership Boolean   @default(false)
+  order        Int       @default(0)
+  archivedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  org          Organization @relation(fields: [orgId], references: [id])
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  memberships  Membership[]
+  homeForUsers User[]       @relation("HomeTeam")
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@index([departmentId])
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String
+  teamId    String
+  teamRole  TeamRole @default(MEMBER)
+  createdAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id])
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, teamId])
+  @@index([orgId])
+  @@index([teamId])
+}
+
+/// Append-only audit of sensitive changes (FR-2.6).
+model ActivityLog {
+  id         String   @id @default(cuid())
+  orgId      String
+  actorId    String
+  action     String
+  targetType String
+  targetId   String?
+  teamId     String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  org Organization @relation(fields: [orgId], references: [id])
+  // Restrict: audit rows keep their actor — a user with activity cannot be hard-deleted.
+  actor User @relation("ActorActivity", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([orgId])
+  @@index([teamId])
+  @@index([createdAt])
+}
+
+/// Org-configurable quarter (FR-3.2 / AC-3.2.4). Defaults to calendar quarters when seeded.
+model QuarterDefinition {
+  id         String   @id @default(cuid())
+  orgId      String
+  fiscalYear Int
+  index      Int // 1..4
+  label      String
+  startsOn   DateTime @db.Date
+  endsOn     DateTime @db.Date
+
+  org Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, fiscalYear, index])
+  @@index([orgId])
 }
