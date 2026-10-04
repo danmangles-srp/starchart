@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/requireUser';
+import { UnauthenticatedError } from '@/lib/auth/errors';
 import { getReadableTeam } from '@/features/org/data/teams';
 
 /**
@@ -16,7 +17,10 @@ export default async function TeamLayout({
   params: Promise<{ teamId: string }>;
 }) {
   const { teamId } = await params;
-  const viewer = await requireUser().catch(() => redirect('/sign-in'));
+  const viewer = await requireUser().catch((error: unknown) => {
+    if (error instanceof UnauthenticatedError) redirect('/sign-in');
+    throw error;
+  });
   const team = await getReadableTeam(viewer, teamId);
   if (!team) notFound();
   return children;
