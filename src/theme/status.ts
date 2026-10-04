@@ -1,9 +1,10 @@
 import type { ComponentType } from 'react';
 import type { SvgIconProps } from '@mui/material/SvgIcon';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import WarningIcon from '@mui/icons-material/ChangeHistory';
-import CancelIcon from '@mui/icons-material/Cancel';
-import CircleIcon from '@mui/icons-material/CheckCircleOutline';
+// Named by role, not by glyph, so the mapping below reads truthfully.
+import OnTrackIcon from '@mui/icons-material/CheckCircle';
+import AtRiskIcon from '@mui/icons-material/ChangeHistory';
+import OffTrackIcon from '@mui/icons-material/Cancel';
+import DoneIcon from '@mui/icons-material/CheckCircleOutline';
 
 /**
  * Rock status. Status is NEVER encoded by color alone (NFR-3.3): every status
@@ -21,10 +22,10 @@ export interface StatusMeta {
 }
 
 export const ROCK_STATUS_META: Readonly<Record<RockStatus, StatusMeta>> = {
-  'on-track': { label: 'On track', color: 'success', icon: CheckCircleIcon },
-  'at-risk': { label: 'At risk', color: 'warning', icon: WarningIcon },
-  'off-track': { label: 'Off track', color: 'error', icon: CancelIcon },
-  done: { label: 'Done', color: 'primary', icon: CircleIcon },
+  'on-track': { label: 'On track', color: 'success', icon: OnTrackIcon },
+  'at-risk': { label: 'At risk', color: 'warning', icon: AtRiskIcon },
+  'off-track': { label: 'Off track', color: 'error', icon: OffTrackIcon },
+  done: { label: 'Done', color: 'primary', icon: DoneIcon },
 };
 
 export const ROCK_STATUSES = Object.keys(ROCK_STATUS_META) as readonly RockStatus[];
