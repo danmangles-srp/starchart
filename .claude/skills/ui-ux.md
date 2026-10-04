@@ -114,7 +114,7 @@ Every screen renders every branch explicitly. A blank screen during load, or a r
 | ----- | ------ |
 | **Loading** | **Skeleton** mirroring the final layout (grid rows, cards). Spinner only for short, shape-unknown waits. |
 | **Empty** | First-run guidance: a friendly line + one clear CTA ("Add your team's first Rock"). The empty state is a *welcome*, never a blank canvas. |
-| **Error** | Plain-language cause + **Retry**. Never a stack trace or `Error: …`. A permission issue reads as "read-only — you're not on this team", not a scary failure. |
+| **Error** | Plain-language cause + **Retry**. Never a stack trace or `Error: …`. A team you're not on simply isn't shown — a stray deep link lands on a friendly not-found, not a scary failure. |
 | **Content** | The data, as the hero. |
 
 **Optimistic UI**: interactive writes update immediately with a subtle pending state; on failure the
@@ -154,8 +154,8 @@ These rules make screens testable without a browser (see `testing.md`):
 - **Don't await a spinner that never settles.** Drive each state by passing props / mocking the data
   hook; assert the loading / empty / error / content UI per state.
 - **Query by role/label**, not by brittle text/position — which also enforces the a11y labels above.
-- Assert that status/overdue cues render as **icon + text**, and that off-team screens render **read-only**
-  (no edit affordances).
+- Assert that status/overdue cues render as **icon + text**, and that a team the user isn't on isn't
+  reachable (deep link → not-found), while an Admin can open any team.
 - Add a Playwright screenshot of each key screen state so visual regressions are catchable (see the
   design loop).
 

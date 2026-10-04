@@ -15,23 +15,19 @@
 
 ## Product shape (the one-paragraph version)
 
-Cadence is a **multi-user, server-backed web app**. Everyone signs in with their company Google **or
-Microsoft** account.
+Cadence is a **multi-user, server-backed web app**. IT's possible to create totally separate organisations.
+Everyone signs in with their company Google **or Microsoft** account.
 The company is modeled as a **Leadership Team plus 4 departments, each holding 5 teams (21 team
 workspaces total)**. Every team runs the same four EOS modules against its own data: **Rocks** (quarterly
 priorities), **Data** (a weekly Scorecard of measurables), **Issues** (an IDS list), and **Todos**
-(7-day action items). A person can belong to several teams; **anyone can read any team's data**
-(transparency), but **editing is scoped** by team membership and role. After login a person lands on a
-personal **"My Week"** home that aggregates their own work across every team they're on. The look is
+(7-day action items). A person can belong to several teams; **visibility and editing are scoped** by team membership and role — you see only the teams you're on, while an **Admin can read (and manage) every team in their organization**. After login a person lands on a personal **"My Week"** home that aggregates their own work across every team they're on. The look is
 **Google-grade Material 3** — calm, fast, trustworthy, accessible.
 
 ## Scope guard — build these four modules, nothing more
 
 In scope for v1: **Identity/Access, Organization/Teams, Rocks, Data/Scorecard, Issues, Todos, the
 My-Week home + per-team dashboard, and the cross-cutting UX that makes those usable.** Explicitly **out
-of scope** (see `plan.md` → "Ideas & future opportunities"): a dedicated Meeting/L10 mode, the
-Vision/Traction Organizer (V/TO), the Accountability Chart / People module, Headlines, 1-on-1s, client
-billing, and any public/external-facing surface. Do not build them, and do not add a fifth module
+of scope** (see `plan.md` → "Ideas & future opportunities"): a dedicated Meeting/L10 mode, Headlines, and any public/external-facing surface. Do not build them, and do not add a fifth module 
 without the user's say-so.
 
 ---
@@ -63,18 +59,22 @@ mutation**, never only in the UI.
 - Permission matrix (v1):
   | Capability | Member | Team Lead | Admin |
   | --- | :-: | :-: | :-: |
-  | Read any team's data (org-wide) | ✅ | ✅ | ✅ |
+  | Read data for teams they belong to | ✅ | ✅ | ✅ |
+  | Read every team's data across the organization | — | — | ✅ |
   | Create/edit own Individual Rocks & own Todos | ✅ | ✅ | ✅ |
-  | Add/edit Issues, Todos & own Scorecard entries on **teams they're on** | ✅ | ✅ | ✅ |
+  | Add/edit Issues, Todos & Scorecard entries on **teams they're on** | ✅ | ✅ | ✅ (any team) |
   | Manage a team's Rocks/measurables structure (create/delete/reorder), team membership | — | ✅ (their teams) | ✅ (all) |
   | Manage departments, teams, users, role assignment, app settings | — | — | ✅ |
-- **AC-1.2.1** *Given* a Member not on team T, *when* they attempt to edit T's Rocks/Issues/Todos/
-  Scorecard via any path (UI or direct API), *then* the server rejects it with 403 and no write occurs.
+- **AC-1.2.1** *Given* a Member/Team Lead **not** on team T, *when* they attempt to **read or edit** T's
+  Rocks/Issues/Todos/Scorecard via any path (UI or direct API), *then* the server refuses — a read
+  returns not-found/forbidden, a write returns 403 — and no data is exposed or written.
 - **AC-1.2.2** *Given* a Team Lead of team T, *when* they add a measurable or remove a member on T,
   *then* it succeeds; *when* they attempt the same on a team they do not lead, *then* it is rejected.
 - **AC-1.2.3** *Given* an Admin, *when* they perform any org/team/user management action, *then* it
   succeeds and is recorded in the activity log (FR-2.6).
-- **AC-1.2.4** Read is org-wide for every authenticated domain user; no team's data is hidden from read.
+- **AC-1.2.4** Reads are **team-scoped**: a Member/Team Lead can read only the teams they belong to; an
+  **Admin** can read every team in their organization. The server enforces this on every cross-team read
+  — there is no global "everyone can read everything" surface.
 
 ### FR-1.3 Profile
 - **AC-1.3.1** *Given* a signed-in user, *then* their name and avatar are sourced from Google on first
@@ -106,15 +106,19 @@ The org is a **Leadership Team** plus **4 departments**, each containing **5 tea
   aggregate across A and B.
 
 ### FR-2.3 Team switcher & context
-- **AC-2.3.1** *Given* a signed-in user, *then* a team switcher in the left drawer lists all teams
-  (grouped by department, Leadership pinned on top); choosing one sets the active team context.
+- **AC-2.3.1** *Given* a signed-in user, *then* a team switcher in the left drawer lists **the teams they
+  belong to** (an **Admin** sees all teams in the organization), grouped by department, Leadership pinned
+  on top; choosing one sets the active team context.
 - **AC-2.3.2** The active team persists across navigation and reloads (per-user, server- or
   cookie-stored); deep links encode the team so a shared URL opens the same context.
 
 ### FR-2.4 Visibility & edit scoping
-- **AC-2.4.1** *Given* any authenticated domain user, *when* they open a team they are **not** on, *then*
-  they can read everything but every edit affordance is absent/disabled with a clear "read-only — you're
-  not on this team" cue (and the server still enforces it per FR-1.2).
+- **AC-2.4.1** *Given* a Member/Team Lead, *when* they try to open a team they are **not** on (via the UI
+  or a direct URL), *then* its data is not exposed — the team isn't listed in their switcher and a direct
+  link lands on a friendly not-found/forbidden view; the server enforces this regardless of the client.
+- **AC-2.4.2** *Given* an **Admin**, *when* they open any team in their organization, *then* they can
+  read it (and manage it per FR-1.2); an admin action on a team they don't belong to is attributed to
+  them in the activity log (FR-2.6).
 
 ### FR-2.5 Admin management
 Admins manage the org from an Admin area: departments, teams, users, memberships, role assignment.
@@ -131,6 +135,18 @@ Admins manage the org from an Admin area: departments, teams, users, memberships
   measurable deleted), *then* an append-only activity record (actor, action, target, timestamp) is
   written and viewable by Admins (and, for a team's own activity, by that team).
 
+### FR-2.7 Organization (tenancy — org-ready)
+All data lives under a top-level **Organization**. v1 runs a single seeded organization; the schema and
+data-access layer are **org-ready** so additional, fully isolated organizations can be added later
+without migrating existing rows.
+- **AC-2.7.1** Every domain entity (users, departments, teams, rocks, measurables, weekly entries,
+  issues, todos, activity log) belongs to exactly one Organization; the data-access layer scopes every
+  read and write by `orgId`, and **no read or write ever crosses an org boundary**.
+- **AC-2.7.2** *Given* a (future) second organization, *when* its data is created, *then* it is fully
+  isolated — no user, team, or record from one org is visible or editable from another.
+- **AC-2.7.3** A user belongs to exactly one organization (v1), resolved at sign-in from their verified
+  email domain / tenant; "an Admin reads the whole org" (FR-1.2) means that Admin's own organization.
+
 ---
 
 ## FR-3 — Rocks (quarterly priorities)
@@ -142,7 +158,7 @@ Rocks exist at three levels: **Company**, **Team**, **Individual**.
 
 ### FR-3.2 Rock fields & status
 A Rock has: title, optional description, **owner** (one person), **level**, **team** (for team rocks),
-**target quarter**, optional **due date** within the quarter, and **status** ∈ {on-track, at-risk,
+**target quarter**, (default to current quarter) **due date** within the quarter, and **status** ∈ {on-track, at-risk,
 off-track, done}.
 - **AC-3.2.1** *Given* a new Rock, *when* saved, *then* title + owner + level + quarter are required;
   status defaults to on-track.
@@ -182,7 +198,7 @@ format (number, %, currency, time), and cadence (**weekly** in v1).
 
 ### FR-4.2 Weekly entries & the 13-week grid
 The Scorecard is a grid: **rows = measurables**, **columns = the last 13 weeks** (ISO weeks, Monday
-start), newest-right. Cells hold the week's actual value.
+start), newest-left. Cells hold the week's actual value.
 - **AC-4.2.1** *Given* the Scorecard, *then* it shows the trailing 13 weeks by default with the current
   week highlighted; the user can page to earlier 13-week windows.
 - **AC-4.2.2** *Given* an editor permitted for a cell (measurable owner, or team member per FR-1.2),
@@ -316,6 +332,9 @@ team, optional source link (issue/rock it came from).
 - **NFR-1.3** All team-scoped reads/writes go through a data-access layer that applies the visibility +
   permission rules in one place (no ad-hoc queries that bypass scoping).
 - **NFR-1.4** Schema changes ship as **Prisma migrations** committed with the PR; no manual DB edits.
+- **NFR-1.5** **Org-ready tenancy** (FR-2.7): every table carries an `orgId` and the single data-access
+  layer applies it to every query, so cross-org data leakage is structurally impossible — not something
+  each feature must remember.
 
 ## NFR-2 — Performance
 - **NFR-2.1** First meaningful paint of an authenticated page **< 2.0s** on a mid-range laptop over
@@ -335,8 +354,9 @@ team, optional source link (issue/rock it came from).
 
 ## NFR-4 — Security & privacy
 - **NFR-4.1** Auth is **Google or Microsoft only**, **domain/tenant-restricted**, enforced server-side
-  (FR-1.1). Authorization is checked on **every** mutation and on reads of anything beyond
-  org-wide-readable data.
+  (FR-1.1). Authorization is checked on **every** mutation and on **every cross-team read** — a team's
+  data is readable only by its members and by an Admin of that organization; there is no org-wide-read
+  surface for ordinary members.
 - **NFR-4.2** **No secrets in the client or the repo.** Both OAuth client IDs/secrets (Google +
   Microsoft Entra), the DB URL, and `AUTH_SECRET` live in environment variables / Vercel project
   settings only.

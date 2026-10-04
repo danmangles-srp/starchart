@@ -18,7 +18,7 @@ conversation.
    (`NFR-*`) requirements, each with Given/When/Then acceptance criteria that are the definition of done.
    The product is **server-backed and multi-user** (NFR-1): **PostgreSQL via Prisma is the single source
    of truth**; everyone signs in with **Google or Microsoft** (domain/tenant-restricted); **reads are
-   org-wide**, **edits are role-scoped** and enforced **server-side on every mutation**. Scope is exactly
+   scoped to a user's teams** (an Admin reads the whole org), **edits are role-scoped** and enforced **server-side on every mutation**. Scope is exactly
    four modules — **Rocks, Data/Scorecard, Issues, Todos** — plus identity/org, the personal home, and
    per-team dashboards. Do not add a fifth module.
 2. **`plan.md`** — the ordered HOW: **eight milestones** (M0 Foundation → M7 Polish). Execute in
@@ -66,14 +66,17 @@ conversation.
 - **Architecture**: feature-first under `src/features/<feature>/{components,server,domain,data}`.
   **Server-backed, multi-user** — the UI reads from Postgres (via Prisma, often in RSC) and writes
   through **server actions / route handlers** that **validate (Zod) + authorize (role + team) on the
-  server every time**. All team-scoping and permission checks live in one **data-access + authorization
+  server every time**. All org-scoping, team-scoping and permission checks live in one **data-access + authorization
   layer** — never ad-hoc per query. Business logic (quarter/ISO-week math, goal evaluation, permission
   rules, aggregation) is **pure TypeScript**, unit-testable without a browser or DB.
 - **Identity & access**: sign-in is **Google or Microsoft only**, restricted to the company's Workspace
   domain(s) / Entra tenant; the check is **server-side**. A person is keyed by **verified work email**,
   so either provider resolves to the **same user**. Roles: **Admin** (global), **Team Lead** (per team),
-  **Member**. **Reads are org-wide** (transparency); **edits require team membership + role**.
-- **Org model**: a **Leadership Team** + **4 departments × 5 teams = 21 team workspaces**; "department"
+  **Member**. **Reads are team-scoped** — a user sees only the teams they're on, while an **Admin reads
+  (and manages) every team in the organization**; **edits require team membership + role**.
+- **Org model**: everything lives under a top-level **Organization** (the tenant — **org-ready** schema,
+  **one org in v1**, every table carries `orgId`, no cross-org reads/writes). Within an org: a
+  **Leadership Team** + **4 departments × 5 teams = 21 team workspaces**; "department"
   is a grouping/filter. A person may be on **multiple teams** (one is their home team). Each team runs
   its own Rocks / Scorecard / Issues / Todos.
 - **Data model** (canonical names — use everywhere):

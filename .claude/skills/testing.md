@@ -38,7 +38,8 @@ client, `AppClock`, the session, the data-access layer).
 - **Tier 2 — Component (in `vitest` + Testing Library):** each screen renders **every state** of its
   data (loading / empty / error / content); an interaction calls the right server action (mocked);
   optimistic update shows immediately and **rolls back** on a rejected mutation; status/overdue cues are
-  present as **icon + label**, not color alone; read-only mode hides edit affordances for non-members.
+  present as **icon + label**, not color alone; a team a user isn't on isn't reachable (server-refused),
+  while an Admin can open any team.
 - **Tier 2.5 — Data-access (against the test DB):** a `data/` function scopes to the right team, maps
   rows to domain objects, enforces uniqueness (e.g. one WeeklyEntry per measurable/week), and refuses a
   cross-team write.
@@ -68,12 +69,12 @@ rubric in `ui-ux.md` — light + dark, default + 200% zoom, empty + populated. R
 | Component | Test focus |
 | --------- | ---------- |
 | Domain logic / math | Correct output for fixtures incl. boundaries + empty input (quarter edges, ISO-week window, each comparator, empty ≠ 0, overdue/age, milestone progress, rollup) |
-| Permissions | The full FR-1.2 matrix: member/lead/admin × on-team/off-team × read/edit/manage; off-team edit is refused |
+| Permissions | The full FR-1.2 matrix: member/lead/admin × on-team/off-team × read/edit/manage; a non-admin's off-team **read and** edit are refused; an Admin reads/manages any team |
 | Data-access | Scopes to the team; maps rows ↔ domain; enforces uniqueness; refuses cross-team writes; archive not delete |
 | Server actions | Rejects invalid input (Zod); refuses unauthorized actors; writes + logs the activity on success |
 | Controllers / mutations | Optimistic update applies then reconciles on success / **rolls back on failure** (no lost input) |
 | Aggregation | My Week + team-dashboard counts across multiple teams; bounded queries |
-| Component states | Every data branch (loading/empty/error/content) renders; status/overdue as icon+label; read-only cue off-team; a11y roles/labels present |
+| Component states | Every data branch (loading/empty/error/content) renders; status/overdue as icon+label; a team you're not on isn't reachable (Admin can open any); a11y roles/labels present |
 
 Keep every collaborator injectable (Prisma client, `AppClock`, session, data-access) so unit/component
 tests need no browser.

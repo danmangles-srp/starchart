@@ -39,7 +39,7 @@ Client Component (mutation) ─→ server action ─→ Zod validate ─→ auth
 
 > **One authorization seam.** `src/lib/auth/permissions.ts` holds the pure permission predicates
 > (`canEditTeam`, `isTeamLead`, `isAdmin`, …). Every server action calls `requireUser()` then a predicate
-> before writing. Reads of anything beyond org-wide-readable data check too. The client may *also* hide
+> before writing. Cross-team reads check too (a team is readable only by its members and an org Admin). The client may *also* hide
 > an affordance, but the server is the gate.
 
 ## File Organization
@@ -118,8 +118,9 @@ export async function updateRockStatus(input: unknown) {
 - Record sensitive changes in the activity log (status change, solve, membership/role change, archive).
 
 ### Data-access layer
-- All Prisma access lives in a feature's `data/` (or `lib/db` for cross-cutting). It applies team scoping
-  and returns domain-shaped objects — components never see Prisma row types directly.
+- All Prisma access lives in a feature's `data/` (or `lib/db` for cross-cutting). It applies **org + team
+  scoping** (every query filtered by `orgId`, then membership/role) and returns domain-shaped objects —
+  components never see Prisma row types directly.
 - **Archive, don't hard-delete** (soft `archivedAt`) for teams/measurables/issues.
 
 ### Client cache & optimism (TanStack Query)

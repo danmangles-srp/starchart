@@ -125,7 +125,7 @@ context rationalizes. Don't grade your own homework with the same pen.
 
 Conventional Commits (`type(scope): description`):
 
-- All lowercase, no emojis. Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`.
+- no emojis. Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`.
 - Scopes track features and layers (from `plan.md`/`CLAUDE.md`): `auth`, `org`, `team`, `rocks`, `data`,
   `issues`, `todos`, `home`, `admin`, `ui`, `db`, `core`, `ci`.
 - **Do NOT write "Co-authored-by".**

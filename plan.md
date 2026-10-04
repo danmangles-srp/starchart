@@ -26,7 +26,8 @@
    check is server-side. A person is keyed by **verified work email**, so either provider resolves to the
    same user. Sessions are secure http-only cookies.
 5. **Authorization is server-side on every mutation.** Three roles — **Admin** (global), **Team Lead**
-   (per team), **Member**. **Org-wide read**; edits scoped by team membership + role. All scoping lives
+   (per team), **Member**. **Reads are team-scoped** — you see only teams you're on, while an **Admin**
+   reads (and manages) every team in the organization; edits scoped by membership + role. All scoping lives
    in one data-access layer, never ad-hoc per query.
 6. **UI = MUI (Material UI) v6 + MUI X.** Material 3 scheme seeded from **Google blue `#1a73e8`**, light
    **and** dark (system default + toggle). **MUI X DataGrid** powers the Scorecard; **MUI X Charts** the
@@ -46,6 +47,11 @@
     never in the repo or the client bundle.
 13. **v1 cut = M0–M7.** M0–M5 build the shell + identity + the four modules; M6 adds the aggregated home
     and team dashboards; M7 is the cross-cutting polish (search, notifications, a11y/perf/responsive).
+14. **Org-ready multi-tenancy, single org in v1.** A top-level `Organization` is the tenant: every model
+    carries `orgId` and the data-access layer scopes every query by it, so cross-org isolation is
+    structural, not something each feature re-implements. v1 seeds and runs **one** organization; a
+    second org can be added later with no migration of existing rows. Sign-in resolves a user's
+    organization from their email domain/tenant. "An Admin reads the whole org" means their own org.
 
 ## Dependency matrix
 
@@ -148,44 +154,52 @@ wired, the app shell (left drawer + app bar), and a green gate + CI — before a
 
 ## Milestone 1 — Identity, Org, Teams & RBAC
 
-**Objective:** Everyone signs in with Google; the org (Leadership + 4 depts × 5 teams) exists as data;
-team context, org-wide read, role-scoped edit, and the Admin area all work. This is the backbone every
-module depends on.
+**Objective:** Everyone signs in with Google or Microsoft; the org (one `Organization` tenant holding a
+Leadership Team + 4 depts × 5 teams) exists as data; team context, team-scoped read (Admins read every
+team in their org), role-scoped edit, org-scoped data-access, and the Admin area all work. This is the
+backbone every module depends on.
 
 ### User stories
-- As an employee, I want to sign in with my company Google account and immediately be known to the app.
-- As anyone, I want to switch between the teams I'm on and read any team's data.
+- As an employee, I want to sign in with my company Google or Microsoft account and immediately be known.
+- As a member, I want to switch between the teams I'm on and read their data.
+- As an Admin, I want to read every team in the organization.
 - As an Admin, I want to manage departments, teams, people, and roles without a redeploy.
 
 ### Acceptance criteria (see FR-1, FR-2)
-- Only allowed-domain Google accounts can sign in; others are cleanly refused.
-- The team switcher lists all 21 teams grouped by department (Leadership pinned); the active team
-  persists and is encoded in the URL.
-- A non-member of a team can read it but sees no edit affordances; the server rejects any edit anyway.
+- Only allowed-domain/tenant Google or Microsoft accounts can sign in; others are cleanly refused.
+- The team switcher lists the teams a user belongs to (an Admin sees all 21), grouped by department
+  (Leadership pinned); the active team persists and is encoded in the URL.
+- A Member/Team Lead can read only the teams they're on — another team isn't listed and a direct link is
+  refused (server-enforced); an Admin can read and manage any team.
 - Admins can CRUD/archive teams & departments and assign memberships + roles; sensitive actions are
   logged.
 
 ### Tickets
 - **T1.1 — Google + Microsoft sign-in & session.** Auth.js v5 + `@auth/prisma-adapter`, **Google** and
   **Microsoft Entra ID** providers, **server-side domain/tenant allowlist**, **verified-email account
-  linking** (either provider → one user), sign-in screen ("Sign in with Google" + "Sign in with
-  Microsoft"), sign-out, and route protection (unauthenticated → sign-in). *Gate:* unit tests for the
-  domain/tenant-allow check (allow/deny, both providers) + the email-match/link rule; a component test
-  for the sign-in screen. *ACs:* FR-1.1, FR-1.3, FR-1.4. *Deps:* T0.3.
-- **T1.2 — Org/identity schema + seed.** Prisma models: `User` (+ global `isAdmin`, `jobTitle`,
-  `homeTeamId`), `Department`, `Team` (belongs to a department; Leadership flagged), `Membership`
-  (`userId`, `teamId`, `teamRole` ∈ {LEAD, MEMBER}), `ActivityLog`. Migration + a `seed.ts` creating the
-  Leadership team, 4 departments × 5 teams, and demo users/memberships for local dev. *Gate:*
-  schema/migration applies; seed idempotency test. *ACs:* FR-2.1, FR-2.2, FR-2.6. *Deps:* T0.3.
+  linking** (either provider → one user), the user's **`Organization` resolved from their email
+  domain/tenant**, sign-in screen ("Sign in with Google" + "Sign in with Microsoft"), sign-out, and
+  route protection (unauthenticated → sign-in). *Gate:* unit tests for the domain/tenant-allow check
+  (allow/deny, both providers) + the email-match/link rule + org resolution; a component test for the
+  sign-in screen. *ACs:* FR-1.1, FR-1.3, FR-1.4, FR-2.7. *Deps:* T0.3.
+- **T1.2 — Org/identity schema + seed.** Prisma models: `Organization` (the tenant), `User` (+ global
+  `isAdmin`, `jobTitle`, `homeTeamId`), `Department`, `Team` (belongs to a department; Leadership
+  flagged), `Membership` (`userId`, `teamId`, `teamRole` ∈ {LEAD, MEMBER}), `ActivityLog`. **Every table
+  carries `orgId`** (FR-2.7). Migration + a `seed.ts` creating one organization, its Leadership team, 4
+  departments × 5 teams, and demo users/memberships for local dev. *Gate:* schema/migration applies;
+  seed idempotency test; a cross-org isolation test (a query for org A never returns org B rows). *ACs:*
+  FR-2.1, FR-2.2, FR-2.6, FR-2.7. *Deps:* T0.3.
 - **T1.3 — Authorization layer (pure + enforced).** Pure permission functions —
-  `canReadTeam` (always, authed), `canEditTeam`, `isTeamLead`, `isAdmin`, `canManageOrg` — plus the
-  session helper (`requireUser`) and the data-access wrappers that apply scoping in one place. Fully
-  unit-tested against the matrix in FR-1.2. *Gate:* exhaustive permission-matrix unit tests. *ACs:*
-  FR-1.2, NFR-1.2, NFR-1.3, NFR-4.1. *Deps:* T1.1, T1.2.
-- **T1.4 — Team switcher & context.** Left-drawer switcher (grouped by department, Leadership pinned),
-  active-team context persisted per user + encoded in the route; org-wide read with a clear "read-only —
-  you're not on this team" cue for non-members. *Gate:* component tests (grouping, active state,
-  read-only cue). *ACs:* FR-2.3, FR-2.4. *Deps:* T1.3, T0.4.
+  `canReadTeam` (member **or** admin), `canEditTeam`, `isTeamLead`, `isAdmin`, `canManageOrg` — plus the
+  session helper (`requireUser`) and the data-access wrappers that apply **org + team scoping** in one
+  place (every query filtered by `orgId`, then team membership/role). Fully unit-tested against the
+  matrix in FR-1.2. *Gate:* exhaustive permission-matrix unit tests + an org-scoping test. *ACs:*
+  FR-1.2, FR-2.7, NFR-1.2, NFR-1.3, NFR-1.5, NFR-4.1. *Deps:* T1.1, T1.2.
+- **T1.4 — Team switcher & context.** Left-drawer switcher listing the user's teams (an Admin sees all),
+  grouped by department, Leadership pinned; active-team context persisted per user + encoded in the
+  route; a team the user can't read is not listed and a direct link lands on a not-found/forbidden view.
+  *Gate:* component tests (grouping, active state, non-member link refused, admin-sees-all). *ACs:*
+  FR-2.3, FR-2.4. *Deps:* T1.3, T0.4.
 - **T1.5 — Admin area.** Manage departments & teams (create/rename/**archive**), users list, memberships
   (add/remove), and role assignment (Admin, per-team Lead/Member); confirm dialogs on destructive
   actions; writes go through the activity log. Admin-only (server-enforced). *Gate:* component tests for
@@ -265,8 +279,9 @@ evaluation, and trends.
   week boundaries, empty vs 0). *ACs:* FR-4.3, FR-4.2. *Deps:* none.
 - **T3.3 — Scorecard grid (MUI X DataGrid).** Rows=measurables, columns=13 weeks, current-week highlight,
   window paging, red/green cell render **+ marker + a11y label**, keyboard navigation (arrows/Enter), row
-  header = measurable. Read-only for non-members. *Gate:* component tests (render, color+marker, keyboard,
-  read-only). *ACs:* FR-4.2, FR-4.3, FR-4.4, NFR-3.2, NFR-3.3. *Deps:* T3.1, T3.2, T0.4.
+  header = measurable. (Non-members can't open the team; an Admin can view + edit any team.) *Gate:*
+  component tests (render, color+marker, keyboard nav, access control). *ACs:* FR-4.2, FR-4.3, FR-4.4,
+  NFR-3.2, NFR-3.3. *Deps:* T3.1, T3.2, T0.4.
 - **T3.4 — Inline weekly entry (optimistic).** Edit/clear a cell inline; TanStack Query mutation saves
   optimistically and rolls back visibly on failure; empty vs 0 preserved. *Gate:* optimistic-rollback +
   empty/0 tests; server-authz (non-member cell blocked). *ACs:* FR-4.2, NFR-5.1. *Deps:* T3.3.
