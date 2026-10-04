@@ -28,6 +28,7 @@ import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import type { SvgIconProps } from '@mui/material/SvgIcon';
 import type { ComponentType } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
+import SignOutButton from '@/features/auth/components/SignOutButton';
 import { MODULE_NAV, routes, type ModuleKey } from '@/lib/routes';
 
 const DRAWER_WIDTH = 260;
@@ -177,6 +178,7 @@ export default function AppShell({
               U
             </Avatar>
           </Tooltip>
+          <SignOutButton />
         </Toolbar>
       </AppBar>
 
