@@ -254,7 +254,7 @@ The backbone every module depends on. **ACs:** FR-1, FR-2 (+ FR-2.7).
   `Gate:` component tests per flow + server-authz tests (non-admin blocked) + quarter-definition edit
   test. `ACs:` FR-2.5, FR-1.2, FR-2.6, FR-3.2 (AC-3.2.4). `Inv:` INV-1, INV-6, INV-7, INV-10. `Deps:`
   T1.3, T1.2. `Ask:` —
-- **T1.6 — Activity log viewer.**
+- **COMPLETE (#12) · T1.6 — Activity log viewer.**
   `Build:` the append-only log is written **through `authorizedAction`** (INV-10); a viewer (Admin sees
   all; a team sees its own activity). `Gate:` log-write unit test; viewer component + scoping test. `ACs:`
   FR-2.6. `Inv:` INV-1, INV-2, INV-7. `Deps:` T1.3. `Ask:` —
