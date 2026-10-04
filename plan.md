@@ -224,7 +224,7 @@ The backbone every module depends on. **ACs:** FR-1, FR-2 (+ FR-2.7).
   tests for allow/deny × both providers + email-match/link + org resolution; sign-in component test.
   `ACs:` FR-1.1, FR-1.3, FR-1.4, FR-2.7. `Inv:` INV-2, INV-11. `Deps:` T0.3. `Ask:` the exact allowed
   domain(s) + Entra tenant id.
-- **T1.2 — Org/identity schema + seed.**
+- **COMPLETE (#8) · T1.2 — Org/identity schema + seed.**
   `Build:` Prisma models `Organization`, `User` (+ `isAdmin`, `jobTitle`, `homeTeamId`), `Department`,
   `Team` (dept FK; Leadership flag; `archivedAt`), `Membership` (`teamRole` ∈ {LEAD, MEMBER}),
   `ActivityLog`, **`QuarterDefinition` (`orgId`, `fiscalYear`, `index` 1–4, `label`, `startsOn`,
