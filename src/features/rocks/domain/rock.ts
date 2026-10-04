@@ -30,6 +30,7 @@ export interface RockSummary {
   id: string;
   title: string;
   ownerId: string;
+  ownerName: string;
   level: RockLevel;
   teamId: string | null;
   fiscalYear: number;
@@ -53,6 +54,7 @@ export interface RockDetail {
   title: string;
   description: string | null;
   ownerId: string;
+  ownerName: string;
   level: RockLevel;
   teamId: string | null;
   fiscalYear: number;
