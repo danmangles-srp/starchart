@@ -30,6 +30,7 @@
     "@mui/icons-material": "^6.5.0",
     "@mui/material": "^6.5.0",
     "@mui/material-nextjs": "^6.5.0",
+    "@mui/x-data-grid": "7.29.13",
     "@prisma/client": "^6.19.3",
     "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-query": "^5.104.1",
