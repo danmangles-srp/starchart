@@ -59,6 +59,8 @@ export default function CreateRockDialog({
     },
   });
 
+  const noMembers = members.length === 0;
+
   const submit = handleSubmit((values) => {
     setError(null);
     startTransition(async () => {
@@ -89,6 +91,11 @@ export default function CreateRockDialog({
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             {error ? <Alert severity="error">{error}</Alert> : null}
+            {noMembers ? (
+              <Alert severity="info">
+                This team has no members yet — add one in Admin before creating a Rock.
+              </Alert>
+            ) : null}
             <TextField
               label="Title"
               {...register('title')}
@@ -146,7 +153,7 @@ export default function CreateRockDialog({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button type="submit" variant="contained" disabled={pending}>
+          <Button type="submit" variant="contained" disabled={pending || noMembers}>
             Add Rock
           </Button>
         </DialogActions>

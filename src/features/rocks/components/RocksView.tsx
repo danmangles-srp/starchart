@@ -74,7 +74,8 @@ export default function RocksView({
   const [level, setLevel] = useState('all');
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
 
   // Resync when the server sends a new set (quarter change / refresh) — render-time
   // reset rather than an effect (no cascading-render lint, React-recommended pattern).
@@ -110,6 +111,7 @@ export default function RocksView({
   const changeStatus = (rockId: string, next: RockStatus) => {
     const previous = items;
     setError(null);
+    setSavingId(rockId);
     setItems((cur) => cur.map((r) => (r.id === rockId ? { ...r, status: next } : r)));
     startTransition(async () => {
       const result = await updateRockStatusAction({ rockId, status: next });
@@ -117,6 +119,7 @@ export default function RocksView({
         setItems(previous);
         setError(result.message);
       }
+      setSavingId(null);
     });
   };
 
@@ -214,7 +217,7 @@ export default function RocksView({
             <RockCard
               key={rock.id}
               rock={rock}
-              disabled={pending}
+              disabled={savingId === rock.id}
               onStatusChange={(next) => changeStatus(rock.id, next)}
             />
           ))}
