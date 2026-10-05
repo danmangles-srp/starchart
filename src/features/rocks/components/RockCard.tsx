@@ -1,3 +1,4 @@
+import NextLink from 'next/link';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -23,7 +24,18 @@ export default function RockCard({
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle1" fontWeight={600} noWrap>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              noWrap
+              component={NextLink}
+              href={rock.teamId ? `/t/${rock.teamId}/rocks/${rock.id}` : '#'}
+              sx={{
+                color: 'inherit',
+                textDecoration: 'none',
+                '&:hover': { textDecoration: 'underline' },
+              }}
+            >
               {rock.title}
             </Typography>
             <Typography variant="body2" color="text.secondary">

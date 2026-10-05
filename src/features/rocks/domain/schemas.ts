@@ -19,4 +19,18 @@ export const UpdateRockStatusSchema = z.object({
   status: z.enum(['on-track', 'at-risk', 'off-track', 'done']),
 });
 
+export const AddMilestoneSchema = z.object({
+  rockId: z.string().min(1),
+  title: z.string().trim().min(1).max(200),
+});
+export const ToggleMilestoneSchema = z.object({
+  rockId: z.string().min(1),
+  milestoneId: z.string().min(1),
+  done: z.boolean(),
+});
+export const ReorderMilestonesSchema = z.object({
+  rockId: z.string().min(1),
+  orderedIds: z.array(z.string().min(1)).min(1),
+});
+
 export type CreateRockInput = z.infer<typeof CreateRockSchema>;
