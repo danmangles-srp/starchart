@@ -289,7 +289,7 @@ quarter selector (org-configurable), and company→team roll-up. **ACs:** FR-3 (
   writes via `authorizedAction`. `Gate:` form-validation + optimistic-rollback + server-authz +
   closed-quarter-refused tests. `ACs:` FR-3.1, FR-3.2 (incl. AC-3.2.3), NFR-5.1. `Inv:` INV-1, INV-5,
   INV-6. `Deps:` T2.3, T1.6. `Ask:` —
-- **T2.5 — Milestones.**
+- **COMPLETE (#18) · T2.5 — Milestones.**
   `Build:` Rock detail with a milestone checklist — add/complete/reorder (dnd-kit); `done/total` progress.
   `Gate:` component + reorder-persist tests. `ACs:` FR-3.3. `Inv:` INV-1, INV-5. `Deps:` T2.4. `Ask:` —
 - **T2.6 — Company→Team linking + roll-up.**

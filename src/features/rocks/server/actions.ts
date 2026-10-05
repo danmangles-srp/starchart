@@ -13,6 +13,8 @@ import {
   addMilestone,
   setMilestoneDone,
   reorderMilestones,
+  linkRocks,
+  unlinkRocks,
 } from '../data/rocksRepo';
 import type { RockDetail } from '../domain/rock';
 import { listQuarterDefinitions } from '../data/quartersRepo';
@@ -24,6 +26,7 @@ import {
   AddMilestoneSchema,
   ToggleMilestoneSchema,
   ReorderMilestonesSchema,
+  LinkRockSchema,
 } from '../domain/schemas';
 
 /**
@@ -138,5 +141,28 @@ export const reorderMilestonesAction = authorizedAction({
     await reorderMilestones(viewer.orgId, input.rockId, input.orderedIds);
     revalidateRock(rock.teamId, rock.id);
     return { rockId: input.rockId };
+  },
+});
+
+// Linking is a Company Rock management action (FR-3.4) — authorized on the company rock.
+export const linkRockAction = authorizedAction({
+  schema: LinkRockSchema,
+  authorize: () => true,
+  handler: async ({ viewer, input }) => {
+    const company = await loadEditableRock(viewer, input.companyRockId);
+    await linkRocks(viewer.orgId, input.companyRockId, input.teamRockId);
+    revalidateRock(company.teamId, company.id);
+    return { companyRockId: input.companyRockId, teamRockId: input.teamRockId };
+  },
+});
+
+export const unlinkRockAction = authorizedAction({
+  schema: LinkRockSchema,
+  authorize: () => true,
+  handler: async ({ viewer, input }) => {
+    const company = await loadEditableRock(viewer, input.companyRockId);
+    await unlinkRocks(viewer.orgId, input.companyRockId, input.teamRockId);
+    revalidateRock(company.teamId, company.id);
+    return { companyRockId: input.companyRockId, teamRockId: input.teamRockId };
   },
 });
