@@ -5,11 +5,55 @@ import { authorizedAction } from '@/lib/auth/authorizedAction';
 import { ForbiddenError, NotFoundError } from '@/lib/auth/errors';
 import { logActivity } from '@/features/activity/data/activityLog';
 import { ACTIVITY_ACTIONS } from '@/features/activity/domain/activity';
-import { createRock, getRockDetail, setRockStatus } from '../data/rocksRepo';
+import type { Viewer } from '@/lib/auth/permissions';
+import {
+  createRock,
+  getRockDetail,
+  setRockStatus,
+  addMilestone,
+  setMilestoneDone,
+  reorderMilestones,
+} from '../data/rocksRepo';
+import type { RockDetail } from '../domain/rock';
 import { listQuarterDefinitions } from '../data/quartersRepo';
 import { canManageRock } from '../domain/permissions';
 import { isQuarterClosed } from '../domain/quarter';
-import { CreateRockSchema, UpdateRockStatusSchema } from '../domain/schemas';
+import {
+  CreateRockSchema,
+  UpdateRockStatusSchema,
+  AddMilestoneSchema,
+  ToggleMilestoneSchema,
+  ReorderMilestonesSchema,
+} from '../domain/schemas';
+
+/**
+ * Load a rock the viewer may edit, enforcing per-level authz + the closed-quarter
+ * freeze (AC-3.2.3) in one place. Used by status + milestone mutations.
+ */
+async function loadEditableRock(viewer: Viewer, rockId: string): Promise<RockDetail> {
+  const rock = await getRockDetail(viewer.orgId, rockId);
+  if (!rock) throw new NotFoundError('Rock not found.');
+  if (!canManageRock(viewer, { level: rock.level, teamId: rock.teamId, ownerId: rock.ownerId })) {
+    throw new ForbiddenError();
+  }
+  const defs = await listQuarterDefinitions(viewer.orgId);
+  const closed = isQuarterClosed(
+    defs,
+    { fiscalYear: rock.fiscalYear, quarterIndex: rock.quarterIndex },
+    new Date(),
+  );
+  if (closed && !viewer.isAdmin) {
+    throw new ForbiddenError('This quarter is closed — only an admin can change its Rocks.');
+  }
+  return rock;
+}
+
+function revalidateRock(teamId: string | null, rockId: string) {
+  if (teamId) {
+    revalidatePath(`/t/${teamId}/rocks`);
+    revalidatePath(`/t/${teamId}/rocks/${rockId}`);
+  }
+}
 
 export const createRockAction = authorizedAction({
   schema: CreateRockSchema,
@@ -49,26 +93,9 @@ export const updateRockStatusAction = authorizedAction({
   // Real authorization happens in the handler, which needs the loaded rock (team + quarter).
   authorize: () => true,
   handler: async ({ viewer, input }) => {
-    const rock = await getRockDetail(viewer.orgId, input.rockId);
-    if (!rock) throw new NotFoundError('Rock not found.');
-
-    if (!canManageRock(viewer, { level: rock.level, teamId: rock.teamId, ownerId: rock.ownerId })) {
-      throw new ForbiddenError();
-    }
-
-    // Closed-quarter freeze (AC-3.2.3): only an Admin may edit a Rock in a closed quarter.
-    const defs = await listQuarterDefinitions(viewer.orgId);
-    const closed = isQuarterClosed(
-      defs,
-      { fiscalYear: rock.fiscalYear, quarterIndex: rock.quarterIndex },
-      new Date(),
-    );
-    if (closed && !viewer.isAdmin) {
-      throw new ForbiddenError('This quarter is closed — only an admin can change its Rocks.');
-    }
-
+    const rock = await loadEditableRock(viewer, input.rockId);
     await setRockStatus(viewer.orgId, input.rockId, input.status);
-    if (rock.teamId) revalidatePath(`/t/${rock.teamId}/rocks`);
+    revalidateRock(rock.teamId, rock.id);
     return { rockId: input.rockId, status: input.status };
   },
   audit: ({ viewer, input }) =>
@@ -79,4 +106,37 @@ export const updateRockStatusAction = authorizedAction({
       targetType: 'rock',
       targetId: input.rockId,
     }),
+});
+
+export const addMilestoneAction = authorizedAction({
+  schema: AddMilestoneSchema,
+  authorize: () => true,
+  handler: async ({ viewer, input }) => {
+    const rock = await loadEditableRock(viewer, input.rockId);
+    const milestone = await addMilestone(viewer.orgId, input.rockId, input.title);
+    revalidateRock(rock.teamId, rock.id);
+    return { id: milestone.id };
+  },
+});
+
+export const toggleMilestoneAction = authorizedAction({
+  schema: ToggleMilestoneSchema,
+  authorize: () => true,
+  handler: async ({ viewer, input }) => {
+    const rock = await loadEditableRock(viewer, input.rockId);
+    await setMilestoneDone(viewer.orgId, input.rockId, input.milestoneId, input.done);
+    revalidateRock(rock.teamId, rock.id);
+    return { milestoneId: input.milestoneId, done: input.done };
+  },
+});
+
+export const reorderMilestonesAction = authorizedAction({
+  schema: ReorderMilestonesSchema,
+  authorize: () => true,
+  handler: async ({ viewer, input }) => {
+    const rock = await loadEditableRock(viewer, input.rockId);
+    await reorderMilestones(viewer.orgId, input.rockId, input.orderedIds);
+    revalidateRock(rock.teamId, rock.id);
+    return { rockId: input.rockId };
+  },
 });

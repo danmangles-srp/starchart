@@ -6,6 +6,9 @@ const h = vi.hoisted(() => ({
   createRock: vi.fn(async () => ({ id: 'r1' })),
   getRockDetail: vi.fn(),
   setRockStatus: vi.fn(async () => undefined),
+  addMilestone: vi.fn(async () => ({ id: 'ms1' })),
+  setMilestoneDone: vi.fn(async () => undefined),
+  reorderMilestones: vi.fn(async () => undefined),
   listQuarterDefinitions: vi.fn(async () => [] as unknown[]),
   logActivity: vi.fn(async () => undefined),
 }));
@@ -16,11 +19,14 @@ vi.mock('../data/rocksRepo', () => ({
   createRock: h.createRock,
   getRockDetail: h.getRockDetail,
   setRockStatus: h.setRockStatus,
+  addMilestone: h.addMilestone,
+  setMilestoneDone: h.setMilestoneDone,
+  reorderMilestones: h.reorderMilestones,
 }));
 vi.mock('../data/quartersRepo', () => ({ listQuarterDefinitions: h.listQuarterDefinitions }));
 vi.mock('@/features/activity/data/activityLog', () => ({ logActivity: h.logActivity }));
 
-import { createRockAction, updateRockStatusAction } from './actions';
+import { createRockAction, updateRockStatusAction, addMilestoneAction } from './actions';
 
 const member: Viewer = {
   id: 'm',
@@ -112,5 +118,25 @@ describe('updateRockStatusAction', () => {
     expect(res).toMatchObject({ ok: true });
     expect(h.setRockStatus).toHaveBeenCalledOnce();
     expect(h.logActivity).toHaveBeenCalledOnce();
+  });
+});
+
+describe('addMilestoneAction', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('freezes a closed quarter for a non-admin', async () => {
+    h.viewer.current = member;
+    h.getRockDetail.mockResolvedValue(rock({ fiscalYear: 2020 }));
+    const res = await addMilestoneAction({ rockId: 'r1', title: 'Spec' });
+    expect(res).toMatchObject({ ok: false, error: 'forbidden' });
+    expect(h.addMilestone).not.toHaveBeenCalled();
+  });
+
+  it('adds a milestone for an open-quarter team member', async () => {
+    h.viewer.current = member;
+    h.getRockDetail.mockResolvedValue(rock({ fiscalYear: 2099 }));
+    const res = await addMilestoneAction({ rockId: 'r1', title: 'Spec' });
+    expect(res).toMatchObject({ ok: true });
+    expect(h.addMilestone).toHaveBeenCalledWith('o', 'r1', 'Spec');
   });
 });

@@ -8,6 +8,9 @@ import {
   setRockStatus,
   myRocksFor,
   teamRockSummary,
+  addMilestone,
+  setMilestoneDone,
+  reorderMilestones,
 } from './rocksRepo';
 
 const testUrl = process.env.DATABASE_URL_TEST;
@@ -77,6 +80,37 @@ describe.skipIf(!testUrl)('rocksRepo (Tier 2.5)', () => {
     expect((await getRockDetail(orgId, rock.id, prisma))?.status).toBe('at-risk');
 
     await expect(setRockStatus('other-org', rock.id, 'done', prisma)).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
+  });
+
+  it('adds, toggles, and reorders milestones', async () => {
+    if (!prisma) return;
+    const rock = await createRock(
+      orgId,
+      {
+        title: 'Milestoned',
+        ownerId: userId,
+        level: 'TEAM',
+        teamId,
+        fiscalYear: 2026,
+        quarterIndex: 1,
+      },
+      prisma,
+    );
+    const a = await addMilestone(orgId, rock.id, 'A', prisma);
+    const b = await addMilestone(orgId, rock.id, 'B', prisma);
+
+    await setMilestoneDone(orgId, rock.id, a.id, true, prisma);
+    const first = await getRockDetail(orgId, rock.id, prisma);
+    expect(first?.milestones.map((m) => m.title)).toEqual(['A', 'B']);
+    expect(first?.milestones.find((m) => m.id === a.id)?.done).toBe(true);
+
+    await reorderMilestones(orgId, rock.id, [b.id, a.id], prisma);
+    const second = await getRockDetail(orgId, rock.id, prisma);
+    expect(second?.milestones.map((m) => m.title)).toEqual(['B', 'A']);
+
+    await expect(addMilestone('other-org', rock.id, 'X', prisma)).rejects.toBeInstanceOf(
       NotFoundError,
     );
   });

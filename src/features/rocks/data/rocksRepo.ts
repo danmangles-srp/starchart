@@ -194,3 +194,48 @@ export async function teamRockSummary(
   }
   return counts;
 }
+
+// --- Milestones (T2.5) ---
+
+export async function addMilestone(
+  orgId: string,
+  rockId: string,
+  title: string,
+  prisma: PrismaClient = db,
+) {
+  const rock = await prisma.rock.findFirst({ where: { id: rockId, orgId }, select: { id: true } });
+  if (!rock) throw new NotFoundError('Rock not found.');
+  const count = await prisma.milestone.count({ where: { rockId } });
+  return prisma.milestone.create({ data: { rockId, title, order: count + 1 } });
+}
+
+export async function setMilestoneDone(
+  orgId: string,
+  rockId: string,
+  milestoneId: string,
+  done: boolean,
+  prisma: PrismaClient = db,
+): Promise<void> {
+  // Scope by rockId (not just org) so a milestone can only be toggled through the
+  // rock the caller actually authorized — prevents an in-org cross-rock IDOR.
+  const res = await prisma.milestone.updateMany({
+    where: { id: milestoneId, rockId, rock: { orgId } },
+    data: { done },
+  });
+  if (res.count === 0) throw new NotFoundError('Milestone not found.');
+}
+
+export async function reorderMilestones(
+  orgId: string,
+  rockId: string,
+  orderedIds: string[],
+  prisma: PrismaClient = db,
+): Promise<void> {
+  const rock = await prisma.rock.findFirst({ where: { id: rockId, orgId }, select: { id: true } });
+  if (!rock) throw new NotFoundError('Rock not found.');
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.milestone.updateMany({ where: { id, rockId }, data: { order: index + 1 } }),
+    ),
+  );
+}

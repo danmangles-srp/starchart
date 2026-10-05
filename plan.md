@@ -283,7 +283,7 @@ quarter selector (org-configurable), and company→team roll-up. **ACs:** FR-3 (
   owner/status/level; **quarter selector (driven by definitions)** in the app bar, default current; four
   states. `Gate:` component tests per state + filter. `ACs:` FR-3.5, FR-7.3, NFR-9.1. `Inv:` INV-6,
   INV-7, INV-8. `Deps:` T2.1, T2.2, T0.4. `Ask:` —
-- **T2.4 — Create/edit Rock + status update.**
+- **COMPLETE (#17) · T2.4 — Create/edit Rock + status update.**
   `Build:` RHF + Zod form (title/owner/level/quarter/due); status change optimistic; **edits to a Rock in
   a closed quarter are refused server-side (Admin override)** (AC-3.2.3); permission-gated per level; all
   writes via `authorizedAction`. `Gate:` form-validation + optimistic-rollback + server-authz +
