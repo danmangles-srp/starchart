@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { systemClock, fixedClock, calendarQuarters, calendarQuarterKey } from './time';
+import {
+  systemClock,
+  fixedClock,
+  calendarQuarters,
+  calendarQuarterKey,
+  isoWeekKey,
+  isoWeekEquals,
+  trailingIsoWeeks,
+} from './time';
 
 describe('clock', () => {
   it('systemClock returns roughly the current time', () => {
@@ -35,5 +43,40 @@ describe('calendar quarters', () => {
       fiscalYear: 2026,
       quarterIndex: 4,
     });
+  });
+});
+
+describe('ISO weeks', () => {
+  it('maps a date to its ISO (year, week)', () => {
+    // 2026-01-01 is a Thursday → ISO week 1 of 2026.
+    expect(isoWeekKey(new Date('2026-01-01T12:00:00'))).toEqual({ isoYear: 2026, isoWeek: 1 });
+  });
+
+  it('handles the year boundary where ISO year differs from calendar year', () => {
+    // 2021-01-01 is a Friday → belongs to ISO week 53 of 2020.
+    expect(isoWeekKey(new Date('2021-01-01T12:00:00'))).toEqual({ isoYear: 2020, isoWeek: 53 });
+  });
+
+  it('isoWeekEquals compares both parts', () => {
+    expect(isoWeekEquals({ isoYear: 2026, isoWeek: 5 }, { isoYear: 2026, isoWeek: 5 })).toBe(true);
+    expect(isoWeekEquals({ isoYear: 2026, isoWeek: 5 }, { isoYear: 2026, isoWeek: 6 })).toBe(false);
+    expect(isoWeekEquals({ isoYear: 2025, isoWeek: 5 }, { isoYear: 2026, isoWeek: 5 })).toBe(false);
+  });
+
+  it('returns the trailing window newest-first, starting at the current week', () => {
+    const asOf = new Date('2026-10-05T09:00:00'); // a Monday
+    const weeks = trailingIsoWeeks(asOf, 13);
+    expect(weeks).toHaveLength(13);
+    expect(weeks[0]).toEqual(isoWeekKey(asOf)); // newest first
+    // Strictly 13 distinct, descending weeks (no gaps or repeats across any year boundary).
+    const seen = new Set(weeks.map((w) => `${w.isoYear}-${w.isoWeek}`));
+    expect(seen.size).toBe(13);
+  });
+
+  it('pages the window back by offsetWeeks', () => {
+    const asOf = new Date('2026-10-05T09:00:00');
+    const full = trailingIsoWeeks(asOf, 26);
+    const priorPage = trailingIsoWeeks(asOf, 13, 13);
+    expect(priorPage[0]).toEqual(full[13]); // the page before the trailing 13
   });
 });

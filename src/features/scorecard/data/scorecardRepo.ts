@@ -1,6 +1,8 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
 import { NotFoundError } from '@/lib/auth/errors';
+import { trailingIsoWeeks } from '@/lib/time';
+import { evaluateGoal, latestEnteredValue, weekMapKey, type GoalStatus } from '../domain/scorecard';
 import type {
   Comparator,
   EntryRow,
@@ -8,6 +10,9 @@ import type {
   MeasurableRow,
   WeekKey,
 } from '../domain/measurable';
+
+/** Trailing ISO-week window length for the Scorecard (FR-4.2). */
+const WINDOW_WEEKS = 13;
 
 type MeasurableWithOwner = {
   id: string;
@@ -120,4 +125,89 @@ export async function getWeeklyEntries(
     select: { measurableId: true, isoYear: true, isoWeek: true, value: true },
   });
   return rows;
+}
+
+// --- INV-9 dashboard rollups (consumed by the home / team dashboards, M6) ---
+
+type MeasurableWithEntries = MeasurableWithOwner & {
+  entries: { isoYear: number; isoWeek: number; value: number | null }[];
+};
+
+/** Status of a measurable's most recent entered week across the trailing window. */
+function latestStatus(m: MeasurableWithEntries, weeks: ReturnType<typeof trailingIsoWeeks>) {
+  const byWeek = new Map<string, number | null>();
+  for (const e of m.entries)
+    byWeek.set(weekMapKey({ isoYear: e.isoYear, isoWeek: e.isoWeek }), e.value);
+  const latestValue = latestEnteredValue(byWeek, weeks);
+  const status = evaluateGoal(latestValue, m.comparator, m.goalValue, m.goalMax);
+  return { latestValue, status };
+}
+
+export interface MeasurableStatusRow extends MeasurableRow {
+  latestValue: number | null;
+  status: GoalStatus;
+}
+
+/** INV-9: a user's own measurables whose latest entered week is off-goal ("red"). */
+export async function myOffGoalMeasurablesFor(
+  orgId: string,
+  ownerId: string,
+  asOf: Date,
+  prisma: PrismaClient = db,
+): Promise<MeasurableStatusRow[]> {
+  const weeks = trailingIsoWeeks(asOf, WINDOW_WEEKS);
+  const rows = await prisma.measurable.findMany({
+    where: { orgId, ownerId, archivedAt: null },
+    include: {
+      owner: { select: { name: true, email: true } },
+      entries: {
+        where: { OR: weeks.map((w) => ({ isoYear: w.isoYear, isoWeek: w.isoWeek })) },
+        select: { isoYear: true, isoWeek: true, value: true },
+      },
+    },
+    orderBy: { order: 'asc' },
+  });
+  const out: MeasurableStatusRow[] = [];
+  for (const raw of rows) {
+    const m = raw as unknown as MeasurableWithEntries;
+    const { latestValue, status } = latestStatus(m, weeks);
+    if (status === 'off') out.push({ ...toRow(m), latestValue, status });
+  }
+  return out;
+}
+
+export interface TeamScorecardCounts {
+  total: number;
+  onGoal: number;
+  offGoal: number;
+  empty: number;
+}
+
+/** INV-9: on-goal / off-goal / empty counts for a team's current week (team dashboard, M6). */
+export async function teamScorecardSummary(
+  orgId: string,
+  teamId: string,
+  asOf: Date,
+  prisma: PrismaClient = db,
+): Promise<TeamScorecardCounts> {
+  const weeks = trailingIsoWeeks(asOf, WINDOW_WEEKS);
+  const rows = await prisma.measurable.findMany({
+    where: { orgId, teamId, archivedAt: null },
+    include: {
+      owner: { select: { name: true, email: true } },
+      entries: {
+        where: { OR: weeks.map((w) => ({ isoYear: w.isoYear, isoWeek: w.isoWeek })) },
+        select: { isoYear: true, isoWeek: true, value: true },
+      },
+    },
+  });
+  const counts: TeamScorecardCounts = { total: 0, onGoal: 0, offGoal: 0, empty: 0 };
+  for (const raw of rows) {
+    const { status } = latestStatus(raw as unknown as MeasurableWithEntries, weeks);
+    counts.total += 1;
+    if (status === 'on') counts.onGoal += 1;
+    else if (status === 'off') counts.offGoal += 1;
+    else counts.empty += 1;
+  }
+  return counts;
 }

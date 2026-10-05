@@ -304,12 +304,12 @@ quarter selector (org-configurable), and company→team roll-up. **ACs:** FR-3 (
 **Objective:** the signature EOS screen — a 13-week grid of measurables with inline weekly entry, goal
 evaluation, and trends. **ACs:** FR-4.
 
-- **T3.1 — Scorecard schema + data access.**
+- **COMPLETE (#20) · T3.1 — Scorecard schema + data access.**
   `Build:` `Measurable` (name, ownerId, teamId, goalValue, comparator, format/unit, order, `archivedAt`)
   + `WeeklyEntry` (measurableId, isoYear, isoWeek, value nullable), **unique (measurable, isoYear,
-  isoWeek)**; scoped data-access; expose `myItemsFor` (red measurables I own) + `teamSummary` (INV-9).
-  `Gate:` repository + scoping + uniqueness tests. `ACs:` FR-4.1, FR-4.2, NFR-1.3. `Inv:` INV-2, INV-9.
-  `Deps:` T1.3. `Ask:` —
+  isoWeek)**; scoped data-access. `myItemsFor` (red measurables I own) + `teamSummary` (INV-9) fold into
+  T3.2 — they need the comparator/goal eval. `Gate:` repository + scoping + uniqueness tests.
+  `ACs:` FR-4.1, FR-4.2, NFR-1.3. `Inv:` INV-2, INV-9. `Deps:` T1.3. `Ask:` —
 - **T3.2 — Scorecard domain (pure).**
   `Build:` comparator/goal evaluation (≥, ≤, =, >, <, between; **empty = neutral, empty ≠ 0**); ISO-week
   math (13-week trailing window, Monday start, window paging); row summary (avg/total + hit-rate "9/13 on
