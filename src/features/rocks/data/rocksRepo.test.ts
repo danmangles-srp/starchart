@@ -11,6 +11,11 @@ import {
   addMilestone,
   setMilestoneDone,
   reorderMilestones,
+  linkRocks,
+  unlinkRocks,
+  getSupportingRocks,
+  getSupportedCompanyRock,
+  listLinkableTeamRocks,
 } from './rocksRepo';
 
 const testUrl = process.env.DATABASE_URL_TEST;
@@ -113,5 +118,36 @@ describe.skipIf(!testUrl)('rocksRepo (Tier 2.5)', () => {
     await expect(addMilestone('other-org', rock.id, 'X', prisma)).rejects.toBeInstanceOf(
       NotFoundError,
     );
+  });
+
+  it('links a company rock to supporting team rocks', async () => {
+    if (!prisma) return;
+    const q = { fiscalYear: 2026, quarterIndex: 1 };
+    const company = await createRock(
+      orgId,
+      { title: 'Co Rock', ownerId: userId, level: 'COMPANY', teamId: null, ...q },
+      prisma,
+    );
+    const t1 = await createRock(
+      orgId,
+      { title: 'Supporter 1', ownerId: userId, level: 'TEAM', teamId, ...q },
+      prisma,
+    );
+    const t2 = await createRock(
+      orgId,
+      { title: 'Supporter 2', ownerId: userId, level: 'TEAM', teamId, ...q },
+      prisma,
+    );
+
+    await linkRocks(orgId, company.id, t1.id, prisma);
+    expect((await getSupportingRocks(orgId, company.id, prisma)).map((r) => r.id)).toEqual([t1.id]);
+    expect(await getSupportedCompanyRock(orgId, t1.id, prisma)).toMatchObject({ id: company.id });
+
+    const linkable = (await listLinkableTeamRocks(orgId, company.id, q, prisma)).map((r) => r.id);
+    expect(linkable).toContain(t2.id);
+    expect(linkable).not.toContain(t1.id);
+
+    await unlinkRocks(orgId, company.id, t1.id, prisma);
+    expect(await getSupportingRocks(orgId, company.id, prisma)).toHaveLength(0);
   });
 });

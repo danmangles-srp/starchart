@@ -239,3 +239,100 @@ export async function reorderMilestones(
     ),
   );
 }
+
+// --- Company <-> Team links (T2.6) ---
+
+export async function linkRocks(
+  orgId: string,
+  companyRockId: string,
+  teamRockId: string,
+  prisma: PrismaClient = db,
+) {
+  const quarterSelect = { level: true, fiscalYear: true, quarterIndex: true } as const;
+  const [company, team] = await Promise.all([
+    prisma.rock.findFirst({ where: { id: companyRockId, orgId }, select: quarterSelect }),
+    prisma.rock.findFirst({ where: { id: teamRockId, orgId }, select: quarterSelect }),
+  ]);
+  if (!company || !team) throw new NotFoundError('Rock not found.');
+  if (company.level !== 'COMPANY' || team.level !== 'TEAM') {
+    throw new AppError('invalid-input', 'Links go from a Company Rock to a Team Rock.');
+  }
+  if (company.fiscalYear !== team.fiscalYear || company.quarterIndex !== team.quarterIndex) {
+    throw new AppError('invalid-input', 'Both Rocks must be in the same quarter.');
+  }
+  // A Team Rock supports at most one Company Rock.
+  const existing = await prisma.rockLink.findFirst({ where: { teamRockId } });
+  if (existing && existing.companyRockId !== companyRockId) {
+    throw new AppError('conflict', 'That Team Rock already supports another Company Rock.');
+  }
+  return prisma.rockLink.upsert({
+    where: { companyRockId_teamRockId: { companyRockId, teamRockId } },
+    update: {},
+    create: { companyRockId, teamRockId },
+  });
+}
+
+export async function unlinkRocks(
+  orgId: string,
+  companyRockId: string,
+  teamRockId: string,
+  prisma: PrismaClient = db,
+): Promise<void> {
+  const res = await prisma.rockLink.deleteMany({
+    where: { companyRockId, teamRockId, companyRock: { orgId } },
+  });
+  if (res.count === 0) throw new NotFoundError('Link not found.');
+}
+
+/** Team Rocks supporting a Company Rock (FR-3.4 roll-up source). */
+export async function getSupportingRocks(
+  orgId: string,
+  companyRockId: string,
+  prisma: PrismaClient = db,
+): Promise<RockSummary[]> {
+  const links = await prisma.rockLink.findMany({
+    where: { companyRockId, companyRock: { orgId } },
+    include: { teamRock: { include: withMilestones } },
+  });
+  return links.map((l) => toSummary(l.teamRock as unknown as RockRow));
+}
+
+/** The Company Rock a Team Rock supports, if any (back-link). */
+export async function getSupportedCompanyRock(
+  orgId: string,
+  teamRockId: string,
+  prisma: PrismaClient = db,
+): Promise<{ id: string; title: string } | null> {
+  const link = await prisma.rockLink.findFirst({
+    where: { teamRockId, teamRock: { orgId } },
+    include: { companyRock: { select: { id: true, title: true } } },
+  });
+  return link ? { id: link.companyRock.id, title: link.companyRock.title } : null;
+}
+
+/** Team Rocks in the Company Rock's quarter not yet linked to it (link picker). */
+export async function listLinkableTeamRocks(
+  orgId: string,
+  companyRockId: string,
+  quarter: QuarterRef,
+  prisma: PrismaClient = db,
+): Promise<RockSummary[]> {
+  // Exclude team rocks already supporting ANY company rock (one-company rule).
+  const linked = await prisma.rockLink.findMany({
+    where: { teamRock: { orgId } },
+    select: { teamRockId: true },
+  });
+  const excludeIds = linked.map((l) => l.teamRockId);
+  const rocks = await prisma.rock.findMany({
+    where: {
+      orgId,
+      level: 'TEAM',
+      fiscalYear: quarter.fiscalYear,
+      quarterIndex: quarter.quarterIndex,
+      id: excludeIds.length ? { notIn: excludeIds } : undefined,
+    },
+    include: withMilestones,
+    orderBy: { title: 'asc' },
+  });
+  return rocks.map((r) => toSummary(r as unknown as RockRow));
+}
