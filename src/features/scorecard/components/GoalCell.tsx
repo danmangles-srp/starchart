@@ -13,7 +13,8 @@ export default function GoalCell({ cell, week }: { cell: ScorecardCell; week: We
   const meta = GOAL_STATUS_META[cell.status];
   const Icon = meta.icon;
   const isColored = meta.color !== 'default';
-  const main = isColored ? `${meta.color}.main` : 'text.disabled';
+  // One tone for both the icon and the value, so empty cells read consistently.
+  const tone = isColored ? `${meta.color}.main` : 'text.secondary';
 
   return (
     <Box
@@ -25,12 +26,12 @@ export default function GoalCell({ cell, week }: { cell: ScorecardCell; week: We
         gap: 0.5,
         width: '100%',
         height: '100%',
-        color: isColored ? main : 'text.secondary',
+        color: tone,
         fontVariantNumeric: 'tabular-nums',
         fontWeight: isColored ? 600 : 400,
       }}
     >
-      <Icon fontSize="small" aria-hidden sx={{ color: main }} />
+      <Icon fontSize="small" aria-hidden sx={{ color: tone }} />
       <span>{cell.display}</span>
     </Box>
   );

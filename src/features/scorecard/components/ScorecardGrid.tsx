@@ -82,7 +82,12 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
   if (vm.rows.length === 0) {
     return (
       <Box>
-        <Header offset={vm.offsetWeeks} onPage={page} hasNewer={vm.hasNewer} />
+        <Header
+          offset={vm.offsetWeeks}
+          onPage={page}
+          hasNewer={vm.hasNewer}
+          hasOlder={vm.hasOlder}
+        />
         <EmptyState
           title="No measurables yet"
           description="Measurables you add will track weekly against their goal across the trailing 13 weeks."
@@ -93,7 +98,7 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
 
   return (
     <Box>
-      <Header offset={vm.offsetWeeks} onPage={page} hasNewer={vm.hasNewer} />
+      <Header offset={vm.offsetWeeks} onPage={page} hasNewer={vm.hasNewer} hasOlder={vm.hasOlder} />
       <Box
         sx={{
           '& .cadence-current-week': {
@@ -126,10 +131,12 @@ function Header({
   offset,
   onPage,
   hasNewer,
+  hasOlder,
 }: {
   offset: number;
   onPage: (deltaWeeks: number) => void;
   hasNewer: boolean;
+  hasOlder: boolean;
 }) {
   return (
     <Stack
@@ -154,6 +161,7 @@ function Header({
           variant="outlined"
           startIcon={<ChevronLeftIcon />}
           onClick={() => onPage(13)}
+          disabled={!hasOlder}
         >
           Older
         </Button>

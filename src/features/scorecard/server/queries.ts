@@ -11,10 +11,19 @@ import type { ScorecardRowVM, ScorecardVM, WeekColumn } from '../domain/viewMode
 import { getWeeklyEntries, listMeasurables } from '../data/scorecardRepo';
 
 const WINDOW_WEEKS = 13;
+/** How far back paging may go — two years of trailing windows (FR-4.2 is forward-looking). */
+const MAX_BACK_WEEKS = WINDOW_WEEKS * 8;
+
+/** Snap a raw week offset to a whole window and clamp it to [0, MAX_BACK_WEEKS]. */
+function normalizeOffset(offsetWeeks: number): number {
+  const windows = Math.round(Math.max(0, Math.trunc(offsetWeeks)) / WINDOW_WEEKS);
+  return Math.min(windows, MAX_BACK_WEEKS / WINDOW_WEEKS) * WINDOW_WEEKS;
+}
 
 /**
  * Assemble the team Scorecard view model for the trailing 13-ISO-week window
- * (FR-4.2), paged by `offsetWeeks`. Read is authorized here (members + Admin).
+ * (FR-4.2), paged by `offsetWeeks` (snapped to whole windows, bounded by
+ * MAX_BACK_WEEKS). Read is authorized here (members + Admin).
  */
 export async function loadTeamScorecard(
   viewer: Viewer,
@@ -24,7 +33,7 @@ export async function loadTeamScorecard(
 ): Promise<ScorecardVM> {
   assertCanReadTeam(viewer, teamId);
 
-  const offset = Math.max(0, Math.trunc(offsetWeeks));
+  const offset = normalizeOffset(offsetWeeks);
   const weeks = trailingIsoWeeks(now, WINDOW_WEEKS, offset);
   const columns: WeekColumn[] = weeks.map((w, i) => ({
     key: weekMapKey(w),
@@ -78,7 +87,7 @@ export async function loadTeamScorecard(
     rows,
     canEdit: canEditTeam(viewer, teamId),
     offsetWeeks: offset,
-    hasOlder: true,
+    hasOlder: offset < MAX_BACK_WEEKS,
     hasNewer: offset > 0,
   };
 }

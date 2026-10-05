@@ -91,6 +91,20 @@ describe('loadTeamScorecard — view model', () => {
     const vm = await loadTeamScorecard(member, 'mk1', 13, NOW);
     expect(vm.offsetWeeks).toBe(13);
     expect(vm.hasNewer).toBe(true);
+    expect(vm.hasOlder).toBe(true);
     expect(vm.weeks[0]?.current).toBe(false);
+  });
+
+  it('snaps a misaligned offset to a whole window', async () => {
+    const vm = await loadTeamScorecard(member, 'mk1', 5, NOW);
+    expect(vm.offsetWeeks).toBe(0); // 5 rounds to the current window
+    const vm2 = await loadTeamScorecard(member, 'mk1', 20, NOW);
+    expect(vm2.offsetWeeks).toBe(26); // 20 rounds to 2 windows back
+  });
+
+  it('clamps paging at the history bound and disables Older there', async () => {
+    const vm = await loadTeamScorecard(member, 'mk1', 9999, NOW);
+    expect(vm.offsetWeeks).toBe(13 * 8);
+    expect(vm.hasOlder).toBe(false);
   });
 });
