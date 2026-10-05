@@ -310,7 +310,7 @@ evaluation, and trends. **ACs:** FR-4.
   isoWeek)**; scoped data-access. `myItemsFor` (red measurables I own) + `teamSummary` (INV-9) fold into
   T3.2 — they need the comparator/goal eval. `Gate:` repository + scoping + uniqueness tests.
   `ACs:` FR-4.1, FR-4.2, NFR-1.3. `Inv:` INV-2, INV-9. `Deps:` T1.3. `Ask:` —
-- **T3.2 — Scorecard domain (pure).**
+- **COMPLETE (#21) · T3.2 — Scorecard domain (pure).**
   `Build:` comparator/goal evaluation (≥, ≤, =, >, <, between; **empty = neutral, empty ≠ 0**); ISO-week
   math (13-week trailing window, Monday start, window paging); row summary (avg/total + hit-rate "9/13 on
   goal"). `Gate:` domain unit tests (each comparator, week boundaries, empty vs 0). `ACs:` FR-4.3, FR-4.2.

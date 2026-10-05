@@ -1,5 +1,5 @@
 import { isoWeekEquals, type IsoWeekKey } from '@/lib/time';
-import type { Comparator } from './measurable';
+import type { Comparator, MeasurableFormat } from './measurable';
 
 /**
  * Goal evaluation for one weekly value (INV-3, pure). Empty (no entry) is neutral —
@@ -90,4 +90,57 @@ export function weekMapKey(week: IsoWeekKey): string {
 export function isCurrentWeek(week: IsoWeekKey, weeksNewestFirst: readonly IsoWeekKey[]): boolean {
   const first = weeksNewestFirst[0];
   return first !== undefined && isoWeekEquals(week, first);
+}
+
+/** Round to at most 2 decimals without trailing zeros (locale-free for stable tests). */
+function trim(value: number): string {
+  return String(Math.round(value * 100) / 100);
+}
+
+/**
+ * Display a measurable value in its format (FR-4.1). Empty (null) renders as an
+ * em dash, never 0. Locale-free so the grid is deterministic across environments.
+ */
+export function formatMeasurableValue(
+  value: number | null,
+  format: MeasurableFormat,
+  unit: string | null = null,
+): string {
+  if (value === null) return '—';
+  switch (format) {
+    case 'PERCENT':
+      return `${trim(value)}%`;
+    case 'CURRENCY':
+      return `$${trim(value)}`;
+    case 'TIME':
+      return `${trim(value)}${unit ?? 'h'}`;
+    case 'NUMBER':
+    default:
+      return unit ? `${trim(value)} ${unit}` : trim(value);
+  }
+}
+
+/** The goal target as text, e.g. "≥ 50", "between 1 and 10". */
+const COMPARATOR_SYMBOL: Readonly<Record<Comparator, string>> = {
+  GTE: '≥',
+  LTE: '≤',
+  EQ: '=',
+  GT: '>',
+  LT: '<',
+  BETWEEN: 'between',
+};
+
+export function formatGoal(
+  comparator: Comparator,
+  goal: number,
+  goalMax: number | null,
+  format: MeasurableFormat,
+  unit: string | null = null,
+): string {
+  const g = formatMeasurableValue(goal, format, unit);
+  if (comparator === 'BETWEEN') {
+    const hi = formatMeasurableValue(goalMax ?? goal, format, unit);
+    return `between ${g} and ${hi}`;
+  }
+  return `${COMPARATOR_SYMBOL[comparator]} ${g}`;
 }

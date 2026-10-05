@@ -5,6 +5,8 @@ import {
   latestEnteredValue,
   weekMapKey,
   isCurrentWeek,
+  formatMeasurableValue,
+  formatGoal,
 } from './scorecard';
 
 describe('evaluateGoal', () => {
@@ -90,6 +92,33 @@ describe('latestEnteredValue', () => {
 
   it('returns null when no week has an entry', () => {
     expect(latestEnteredValue(new Map(), weeks)).toBeNull();
+  });
+});
+
+describe('formatMeasurableValue', () => {
+  it('renders empty as an em dash, never 0', () => {
+    expect(formatMeasurableValue(null, 'NUMBER')).toBe('—');
+    expect(formatMeasurableValue(0, 'NUMBER')).toBe('0');
+  });
+
+  it('formats by type and trims decimals', () => {
+    expect(formatMeasurableValue(12.5, 'PERCENT')).toBe('12.5%');
+    expect(formatMeasurableValue(1000, 'CURRENCY')).toBe('$1000');
+    expect(formatMeasurableValue(2, 'TIME')).toBe('2h');
+    expect(formatMeasurableValue(2, 'TIME', 'm')).toBe('2m');
+    expect(formatMeasurableValue(7, 'NUMBER', 'calls')).toBe('7 calls');
+    expect(formatMeasurableValue(3.14159, 'NUMBER')).toBe('3.14');
+  });
+});
+
+describe('formatGoal', () => {
+  it('renders comparator + target', () => {
+    expect(formatGoal('GTE', 50, null, 'NUMBER')).toBe('≥ 50');
+    expect(formatGoal('LT', 5, null, 'PERCENT')).toBe('< 5%');
+  });
+  it('renders a BETWEEN range', () => {
+    expect(formatGoal('BETWEEN', 1, 10, 'NUMBER')).toBe('between 1 and 10');
+    expect(formatGoal('BETWEEN', 5, null, 'NUMBER')).toBe('between 5 and 5');
   });
 });
 
