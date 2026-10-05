@@ -101,7 +101,7 @@ describe.skipIf(!testUrl)('rocksRepo (Tier 2.5)', () => {
     const a = await addMilestone(orgId, rock.id, 'A', prisma);
     const b = await addMilestone(orgId, rock.id, 'B', prisma);
 
-    await setMilestoneDone(orgId, a.id, true, prisma);
+    await setMilestoneDone(orgId, rock.id, a.id, true, prisma);
     const first = await getRockDetail(orgId, rock.id, prisma);
     expect(first?.milestones.map((m) => m.title)).toEqual(['A', 'B']);
     expect(first?.milestones.find((m) => m.id === a.id)?.done).toBe(true);

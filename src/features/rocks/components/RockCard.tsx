@@ -24,20 +24,26 @@ export default function RockCard({
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              noWrap
-              component={NextLink}
-              href={rock.teamId ? `/t/${rock.teamId}/rocks/${rock.id}` : '#'}
-              sx={{
-                color: 'inherit',
-                textDecoration: 'none',
-                '&:hover': { textDecoration: 'underline' },
-              }}
-            >
-              {rock.title}
-            </Typography>
+            {rock.teamId ? (
+              <Typography
+                variant="subtitle1"
+                fontWeight={600}
+                noWrap
+                component={NextLink}
+                href={`/t/${rock.teamId}/rocks/${rock.id}`}
+                sx={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                {rock.title}
+              </Typography>
+            ) : (
+              <Typography variant="subtitle1" fontWeight={600} noWrap>
+                {rock.title}
+              </Typography>
+            )}
             <Typography variant="body2" color="text.secondary">
               {rock.ownerName} · {rock.level.toLowerCase()}
             </Typography>

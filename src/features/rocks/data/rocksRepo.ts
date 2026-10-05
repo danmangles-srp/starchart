@@ -211,12 +211,15 @@ export async function addMilestone(
 
 export async function setMilestoneDone(
   orgId: string,
+  rockId: string,
   milestoneId: string,
   done: boolean,
   prisma: PrismaClient = db,
 ): Promise<void> {
+  // Scope by rockId (not just org) so a milestone can only be toggled through the
+  // rock the caller actually authorized — prevents an in-org cross-rock IDOR.
   const res = await prisma.milestone.updateMany({
-    where: { id: milestoneId, rock: { orgId } },
+    where: { id: milestoneId, rockId, rock: { orgId } },
     data: { done },
   });
   if (res.count === 0) throw new NotFoundError('Milestone not found.');

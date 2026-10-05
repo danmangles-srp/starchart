@@ -49,8 +49,10 @@ async function loadEditableRock(viewer: Viewer, rockId: string): Promise<RockDet
 }
 
 function revalidateRock(teamId: string | null, rockId: string) {
-  if (teamId) revalidatePath(`/t/${teamId}/rocks`);
-  revalidatePath(`/rocks/${rockId}`);
+  if (teamId) {
+    revalidatePath(`/t/${teamId}/rocks`);
+    revalidatePath(`/t/${teamId}/rocks/${rockId}`);
+  }
 }
 
 export const createRockAction = authorizedAction({
@@ -122,7 +124,7 @@ export const toggleMilestoneAction = authorizedAction({
   authorize: () => true,
   handler: async ({ viewer, input }) => {
     const rock = await loadEditableRock(viewer, input.rockId);
-    await setMilestoneDone(viewer.orgId, input.milestoneId, input.done);
+    await setMilestoneDone(viewer.orgId, input.rockId, input.milestoneId, input.done);
     revalidateRock(rock.teamId, rock.id);
     return { milestoneId: input.milestoneId, done: input.done };
   },

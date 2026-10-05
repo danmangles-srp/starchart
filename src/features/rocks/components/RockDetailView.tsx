@@ -85,8 +85,15 @@ function SortableMilestone({
 export default function RockDetailView({ rock, canEdit }: { rock: RockDetail; canEdit: boolean }) {
   const router = useRouter();
   const [milestones, setMilestones] = useState(rock.milestones);
+  const [prevSource, setPrevSource] = useState(rock.milestones);
   const [title, setTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  // Re-seed from the server after a refresh (render-time resync, not an effect).
+  if (rock.milestones !== prevSource) {
+    setPrevSource(rock.milestones);
+    setMilestones(rock.milestones);
+  }
   const [, startTransition] = useTransition();
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -113,10 +120,23 @@ export default function RockDetailView({ rock, canEdit }: { rock: RockDetail; ca
     if (!value) return;
     setTitle('');
     setError(null);
+    const previous = milestones;
+    const optimistic: Milestone = {
+      id: `temp-${Date.now()}`,
+      title: value,
+      dueDate: null,
+      done: false,
+      order: milestones.length + 1,
+    };
+    setMilestones((cur) => [...cur, optimistic]);
     startTransition(async () => {
       const result = await addMilestoneAction({ rockId: rock.id, title: value });
-      if (!result.ok) setError(result.message);
-      else router.refresh();
+      if (!result.ok) {
+        setMilestones(previous);
+        setError(result.message);
+      } else {
+        router.refresh();
+      }
     });
   };
 
