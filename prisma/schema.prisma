@@ -32,6 +32,7 @@ model Organization {
   activityLogs       ActivityLog[]
   quarterDefinitions QuarterDefinition[]
   rocks              Rock[]
+  measurables        Measurable[]
 }
 
 model User {
@@ -54,6 +55,7 @@ model User {
   sessions     Session[]
   activityLogs ActivityLog[] @relation("ActorActivity")
   rocks        Rock[]
+  measurables  Measurable[]
 
   @@index([orgId])
   @@index([homeTeamId])
@@ -134,6 +136,7 @@ model Team {
   memberships  Membership[]
   homeForUsers User[]       @relation("HomeTeam")
   rocks        Rock[]
+  measurables  Measurable[]
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -265,4 +268,65 @@ model RockLink {
   @@unique([companyRockId, teamRockId])
   @@index([companyRockId])
   @@index([teamRockId])
+}
+
+// --- Data / Scorecard (M3) ---
+
+enum Comparator {
+  GTE
+  LTE
+  EQ
+  GT
+  LT
+  BETWEEN
+}
+
+enum MeasurableFormat {
+  NUMBER
+  PERCENT
+  CURRENCY
+  TIME
+}
+
+/// A weekly measurable on a team's Scorecard.
+model Measurable {
+  id         String           @id @default(cuid())
+  orgId      String
+  teamId     String
+  name       String
+  ownerId    String
+  goalValue  Float
+  goalMax    Float? // upper bound for the BETWEEN comparator
+  comparator Comparator
+  format     MeasurableFormat @default(NUMBER)
+  unit       String?
+  order      Int              @default(0)
+  archivedAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  org     Organization  @relation(fields: [orgId], references: [id])
+  team    Team          @relation(fields: [teamId], references: [id])
+  owner   User          @relation(fields: [ownerId], references: [id])
+  entries WeeklyEntry[]
+
+  @@index([orgId])
+  @@index([teamId])
+  @@index([ownerId])
+}
+
+/// A single week's value for a measurable, keyed by ISO (year, week). value null = empty (not 0).
+model WeeklyEntry {
+  id           String   @id @default(cuid())
+  measurableId String
+  isoYear      Int
+  isoWeek      Int
+  value        Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  measurable Measurable @relation(fields: [measurableId], references: [id], onDelete: Cascade)
+
+  @@unique([measurableId, isoYear, isoWeek])
+  @@index([measurableId])
 }

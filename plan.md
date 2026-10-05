@@ -157,8 +157,8 @@ the PR.** Don't re-ask a resolved decision.
 | --- | --- |
 | M0 Foundation, app shell & shared primitives | **COMPLETE** |
 | M1 Identity, Org, Teams & RBAC | **COMPLETE** |
-| M2 Rocks | **IN PROGRESS** |
-| M3 Data / Scorecard | PLANNED |
+| M2 Rocks | **COMPLETE** |
+| M3 Data / Scorecard | **IN PROGRESS** |
 | M4 Todos | PLANNED |
 | M5 Issues (incl. solve → convert) | PLANNED |
 | M6 My Week home + Team dashboards | PLANNED |
@@ -292,7 +292,7 @@ quarter selector (org-configurable), and company→team roll-up. **ACs:** FR-3 (
 - **COMPLETE (#18) · T2.5 — Milestones.**
   `Build:` Rock detail with a milestone checklist — add/complete/reorder (dnd-kit); `done/total` progress.
   `Gate:` component + reorder-persist tests. `ACs:` FR-3.3. `Inv:` INV-1, INV-5. `Deps:` T2.4. `Ask:` —
-- **T2.6 — Company→Team linking + roll-up.**
+- **COMPLETE (#19) · T2.6 — Company→Team linking + roll-up.**
   `Build:` link supporting Team Rocks to a Company Rock; Company Rock shows the rolled-up status; each
   Team Rock links back. `Gate:` rollup component test. `ACs:` FR-3.4. `Inv:` INV-6. `Deps:` T2.2, T2.4.
   `Ask:` —
