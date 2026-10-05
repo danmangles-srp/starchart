@@ -42,3 +42,18 @@ export async function getReadableTeam(
     select: { id: true, name: true },
   });
 }
+
+/** A team's members (for owner pickers etc.), orgId-scoped. */
+export async function listTeamMembers(
+  orgId: string,
+  teamId: string,
+  prisma: PrismaClient = db,
+): Promise<{ userId: string; name: string }[]> {
+  const memberships = await prisma.membership.findMany({
+    where: { orgId, teamId },
+    include: { user: { select: { id: true, name: true, email: true } } },
+  });
+  return memberships
+    .map((m) => ({ userId: m.user.id, name: m.user.name ?? m.user.email }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}

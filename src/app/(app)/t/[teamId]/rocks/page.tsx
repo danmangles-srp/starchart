@@ -1,6 +1,7 @@
 import { requireUser } from '@/lib/auth/requireUser';
 import { listQuarterDefinitions } from '@/features/rocks/data/quartersRepo';
 import { listTeamRocks } from '@/features/rocks/data/rocksRepo';
+import { listTeamMembers } from '@/features/org/data/teams';
 import { resolveCurrentQuarter, listQuarters } from '@/features/rocks/domain/quarter';
 import RocksView from '@/features/rocks/components/RocksView';
 
@@ -28,10 +29,17 @@ export default async function RocksPage({
     quarterIndex: parseNum(sp.q, current.quarterIndex),
   };
 
-  const [rocks, quarterOptions] = [
-    await listTeamRocks(viewer.orgId, teamId, selected),
-    listQuarters(defs, now),
-  ];
+  const rocks = await listTeamRocks(viewer.orgId, teamId, selected);
+  const members = await listTeamMembers(viewer.orgId, teamId);
+  const quarterOptions = listQuarters(defs, now);
 
-  return <RocksView rocks={rocks} quarterOptions={quarterOptions} selected={selected} />;
+  return (
+    <RocksView
+      rocks={rocks}
+      quarterOptions={quarterOptions}
+      selected={selected}
+      teamId={teamId}
+      members={members}
+    />
+  );
 }
