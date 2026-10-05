@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from '@/lib/auth/errors';
+import { isoWeekKey } from '@/lib/time';
 import {
   listMeasurables,
   createMeasurable,
   upsertWeeklyEntry,
   getWeeklyEntries,
+  myOffGoalMeasurablesFor,
+  teamScorecardSummary,
 } from './scorecardRepo';
 
 const testUrl = process.env.DATABASE_URL_TEST;
@@ -89,5 +92,43 @@ describe.skipIf(!testUrl)('scorecardRepo (Tier 2.5)', () => {
     await expect(upsertWeeklyEntry('other-org', m.id, 2026, 40, 1, prisma)).rejects.toBeInstanceOf(
       NotFoundError,
     );
+  });
+
+  it('rolls up a user’s off-goal measurables and a team summary by latest week (INV-9)', async () => {
+    if (!prisma) return;
+    const now = new Date();
+    const wk = isoWeekKey(now);
+    // Isolated team + owner so the counts are not polluted by earlier tests on this team.
+    const rollTeam = await prisma.team.create({ data: { orgId, name: `Roll ${Date.now()}` } });
+    const owner = await prisma.user.create({
+      data: { email: `roll-${Date.now()}@example.com`, orgId },
+    });
+
+    const red = await createMeasurable(
+      orgId,
+      { teamId: rollTeam.id, name: 'Calls', ownerId: owner.id, goalValue: 100, comparator: 'GTE' },
+      prisma,
+    );
+    const green = await createMeasurable(
+      orgId,
+      { teamId: rollTeam.id, name: 'Demos', ownerId: owner.id, goalValue: 10, comparator: 'GTE' },
+      prisma,
+    );
+    // A third with no entry → counts as empty, never off-goal.
+    await createMeasurable(
+      orgId,
+      { teamId: rollTeam.id, name: 'NPS', ownerId: owner.id, goalValue: 50, comparator: 'GTE' },
+      prisma,
+    );
+    await upsertWeeklyEntry(orgId, red.id, wk.isoYear, wk.isoWeek, 20, prisma); // off goal
+    await upsertWeeklyEntry(orgId, green.id, wk.isoYear, wk.isoWeek, 25, prisma); // on goal
+
+    const mine = await myOffGoalMeasurablesFor(orgId, owner.id, now, prisma);
+    expect(mine.map((r) => r.id)).toEqual([red.id]); // only the red one
+    expect(mine[0]?.latestValue).toBe(20);
+    expect(mine[0]?.status).toBe('off');
+
+    const summary = await teamScorecardSummary(orgId, rollTeam.id, now, prisma);
+    expect(summary).toEqual({ total: 3, onGoal: 1, offGoal: 1, empty: 1 });
   });
 });
