@@ -93,7 +93,9 @@ export default function CompanyRockLinks({
                     size="small"
                     color="error"
                     disabled={pending}
-                    onClick={() => act(() => unlinkRockAction({ companyRockId, teamRockId: r.id }))}
+                    onClick={() =>
+                      act(() => unlinkRockAction({ companyRockId, teamRockId: r.id, teamId }))
+                    }
                   >
                     Unlink
                   </Button>
@@ -127,7 +129,7 @@ export default function CompanyRockLinks({
             onClick={() => {
               const id = pick;
               setPick('');
-              act(() => linkRockAction({ companyRockId, teamRockId: id }));
+              act(() => linkRockAction({ companyRockId, teamRockId: id, teamId }));
             }}
           >
             Link

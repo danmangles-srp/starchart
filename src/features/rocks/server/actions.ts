@@ -149,9 +149,9 @@ export const linkRockAction = authorizedAction({
   schema: LinkRockSchema,
   authorize: () => true,
   handler: async ({ viewer, input }) => {
-    const company = await loadEditableRock(viewer, input.companyRockId);
+    await loadEditableRock(viewer, input.companyRockId);
     await linkRocks(viewer.orgId, input.companyRockId, input.teamRockId);
-    revalidateRock(company.teamId, company.id);
+    revalidatePath(`/t/${input.teamId}/rocks/${input.companyRockId}`);
     return { companyRockId: input.companyRockId, teamRockId: input.teamRockId };
   },
 });
@@ -160,9 +160,9 @@ export const unlinkRockAction = authorizedAction({
   schema: LinkRockSchema,
   authorize: () => true,
   handler: async ({ viewer, input }) => {
-    const company = await loadEditableRock(viewer, input.companyRockId);
+    await loadEditableRock(viewer, input.companyRockId);
     await unlinkRocks(viewer.orgId, input.companyRockId, input.teamRockId);
-    revalidateRock(company.teamId, company.id);
+    revalidatePath(`/t/${input.teamId}/rocks/${input.companyRockId}`);
     return { companyRockId: input.companyRockId, teamRockId: input.teamRockId };
   },
 });

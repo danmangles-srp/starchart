@@ -248,13 +248,22 @@ export async function linkRocks(
   teamRockId: string,
   prisma: PrismaClient = db,
 ) {
+  const quarterSelect = { level: true, fiscalYear: true, quarterIndex: true } as const;
   const [company, team] = await Promise.all([
-    prisma.rock.findFirst({ where: { id: companyRockId, orgId }, select: { level: true } }),
-    prisma.rock.findFirst({ where: { id: teamRockId, orgId }, select: { level: true } }),
+    prisma.rock.findFirst({ where: { id: companyRockId, orgId }, select: quarterSelect }),
+    prisma.rock.findFirst({ where: { id: teamRockId, orgId }, select: quarterSelect }),
   ]);
   if (!company || !team) throw new NotFoundError('Rock not found.');
   if (company.level !== 'COMPANY' || team.level !== 'TEAM') {
     throw new AppError('invalid-input', 'Links go from a Company Rock to a Team Rock.');
+  }
+  if (company.fiscalYear !== team.fiscalYear || company.quarterIndex !== team.quarterIndex) {
+    throw new AppError('invalid-input', 'Both Rocks must be in the same quarter.');
+  }
+  // A Team Rock supports at most one Company Rock.
+  const existing = await prisma.rockLink.findFirst({ where: { teamRockId } });
+  if (existing && existing.companyRockId !== companyRockId) {
+    throw new AppError('conflict', 'That Team Rock already supports another Company Rock.');
   }
   return prisma.rockLink.upsert({
     where: { companyRockId_teamRockId: { companyRockId, teamRockId } },
@@ -308,8 +317,9 @@ export async function listLinkableTeamRocks(
   quarter: QuarterRef,
   prisma: PrismaClient = db,
 ): Promise<RockSummary[]> {
+  // Exclude team rocks already supporting ANY company rock (one-company rule).
   const linked = await prisma.rockLink.findMany({
-    where: { companyRockId },
+    where: { teamRock: { orgId } },
     select: { teamRockId: true },
   });
   const excludeIds = linked.map((l) => l.teamRockId);

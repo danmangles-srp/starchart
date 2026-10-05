@@ -71,6 +71,7 @@ describe('CompanyRockLinks', () => {
       expect(h.linkRockAction).toHaveBeenCalledWith({
         companyRockId: 'co1',
         teamRockId: 'Candidate',
+        teamId: 'mk1',
       }),
     );
   });
@@ -81,7 +82,11 @@ describe('CompanyRockLinks', () => {
     if (!firstUnlink) throw new Error('expected an Unlink button');
     await userEvent.click(firstUnlink);
     await waitFor(() =>
-      expect(h.unlinkRockAction).toHaveBeenCalledWith({ companyRockId: 'co1', teamRockId: 'S1' }),
+      expect(h.unlinkRockAction).toHaveBeenCalledWith({
+        companyRockId: 'co1',
+        teamRockId: 'S1',
+        teamId: 'mk1',
+      }),
     );
   });
 });

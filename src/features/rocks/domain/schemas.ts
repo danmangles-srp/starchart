@@ -36,6 +36,7 @@ export const ReorderMilestonesSchema = z.object({
 export const LinkRockSchema = z.object({
   companyRockId: z.string().min(1),
   teamRockId: z.string().min(1),
+  teamId: z.string().min(1), // the team context the detail page is viewed under (for revalidation)
 });
 
 export type CreateRockInput = z.infer<typeof CreateRockSchema>;
