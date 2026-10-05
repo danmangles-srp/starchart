@@ -1,3 +1,5 @@
+import { getISOWeek, getISOWeekYear, startOfISOWeek, subWeeks } from 'date-fns';
+
 /**
  * Clock seam (INV-4). All "now" flows through an injected AppClock so that
  * quarter / ISO-week math and anything time-dependent is deterministic in tests.
@@ -17,8 +19,6 @@ export function fixedClock(instant: string | Date): AppClock {
   const frozen = new Date(instant);
   return { now: () => new Date(frozen) };
 }
-
-import { getISOWeek, getISOWeekYear, startOfISOWeek, subWeeks } from 'date-fns';
 
 export interface QuarterKey {
   fiscalYear: number;
