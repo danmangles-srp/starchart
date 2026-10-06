@@ -246,6 +246,14 @@ export default function AppShell({
             Cadence
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+          <IconButton
+            component={NextLink}
+            href="/search"
+            aria-label="Search"
+            sx={{ display: { xs: 'inline-flex', sm: 'none' } }}
+          >
+            <SearchIcon />
+          </IconButton>
           <SearchBox onSubmit={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)} />
           <TimeAnchorChip />
           <ThemeToggle />

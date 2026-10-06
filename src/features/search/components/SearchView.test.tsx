@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/theme/theme';
 import SearchView from './SearchView';
 import type { SearchResult } from '../domain/search';
 
+const h = vi.hoisted(() => ({ push: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: h.push }) }));
 vi.mock('next/link', () => ({
   default: ({ href, children }: { href: string; children: ReactNode }) => (
     <a href={href}>{children}</a>
@@ -25,6 +28,15 @@ function renderView(query: string, results: SearchResult[]) {
 }
 
 describe('SearchView', () => {
+  beforeEach(() => h.push.mockReset());
+
+  it('submits the on-page search box to /search', async () => {
+    const user = userEvent.setup();
+    renderView('', []);
+    await user.type(screen.getByRole('searchbox', { name: /search/i }), 'launch{Enter}');
+    expect(h.push).toHaveBeenCalledWith('/search?q=launch');
+  });
+
   it('prompts when the query is too short', () => {
     renderView('a', []);
     expect(screen.getByText(/at least 2 characters/i)).toBeInTheDocument();
