@@ -63,6 +63,12 @@ describe('AppShell', () => {
     expect(link).toHaveAttribute('href', '/t/marketing/rocks');
   });
 
+  it('shows the shared time anchor (current quarter + ISO week)', () => {
+    renderShell();
+    // label like "Q3 2026 · W40" — assert the quarter/week shape is present
+    expect(screen.getByText(/Q[1-4] \d{4} · W\d{1,2}/)).toBeInTheDocument();
+  });
+
   it('opens the temporary drawer from the menu button', async () => {
     renderShell();
     const menu = screen.getByRole('button', { name: /open navigation/i });

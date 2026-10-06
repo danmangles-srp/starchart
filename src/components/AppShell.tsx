@@ -17,7 +17,10 @@ import ListItemText from '@mui/material/ListItemText';
 import ListSubheader from '@mui/material/ListSubheader';
 import Divider from '@mui/material/Divider';
 import Avatar from '@mui/material/Avatar';
+import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
+import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
+import { systemClock, timeAnchor } from '@/lib/time';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/HomeOutlined';
 import FlagIcon from '@mui/icons-material/FlagOutlined';
@@ -34,6 +37,29 @@ import type { TeamSummaryRow } from '@/features/org/domain/teams';
 import { MODULE_NAV, routes, type ModuleKey } from '@/lib/routes';
 
 const DRAWER_WIDTH = 260;
+
+/**
+ * The shared "today" anchor (FR-7.3 / INV-4): the current calendar quarter + ISO week,
+ * so Rocks (quarter) and Scorecard/Todos (week) read against one consistent context.
+ * Historical browsing stays in-module (the Rocks quarter selector, the Scorecard pager).
+ */
+function TimeAnchorChip() {
+  const a = timeAnchor(systemClock.now());
+  return (
+    <Tooltip title="Current quarter and week">
+      <Chip
+        size="small"
+        variant="outlined"
+        icon={<CalendarTodayIcon fontSize="small" />}
+        // suppressHydrationWarning: at a quarter/week boundary the server and client
+        // clocks can label differently; ignore that one-render diff rather than block render.
+        label={<span suppressHydrationWarning>{`${a.quarterLabel} · ${a.isoWeekLabel}`}</span>}
+        aria-label={`Today: ${a.quarterLabel}, week ${a.isoWeek}`}
+        sx={{ display: { xs: 'none', sm: 'flex' } }}
+      />
+    </Tooltip>
+  );
+}
 
 const MODULE_ICON: Record<ModuleKey, ComponentType<SvgIconProps>> = {
   rocks: FlagIcon,
@@ -160,6 +186,7 @@ export default function AppShell({
             Cadence
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+          <TimeAnchorChip />
           <ThemeToggle />
           <Tooltip title="Profile (M1)">
             <Avatar sx={{ width: 32, height: 32, fontSize: 14 }} aria-label="Profile">
