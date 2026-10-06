@@ -30,21 +30,25 @@ export async function searchReadable(
     prisma.rock.findMany({
       where: { orgId: viewer.orgId, level: 'TEAM', title: contains, ...teamWhere },
       include: { team },
+      orderBy: { updatedAt: 'desc' },
       take,
     }),
     prisma.measurable.findMany({
       where: { orgId: viewer.orgId, archivedAt: null, name: contains, ...teamWhere },
       include: { team },
+      orderBy: { updatedAt: 'desc' },
       take,
     }),
     prisma.issue.findMany({
       where: { orgId: viewer.orgId, title: contains, ...teamWhere },
       include: { team },
+      orderBy: { updatedAt: 'desc' },
       take,
     }),
     prisma.todo.findMany({
       where: { orgId: viewer.orgId, title: contains, ...teamWhere },
       include: { team },
+      orderBy: { updatedAt: 'desc' },
       take,
     }),
   ]);
