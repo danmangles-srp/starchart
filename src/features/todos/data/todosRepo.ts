@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
 import { NotFoundError } from '@/lib/auth/errors';
+import { MAX_TEAM_LIST } from '@/lib/bounds';
 import { isOverdue, type TodoCounts, type TodoRow } from '../domain/todo';
 
 type TodoWithOwner = {
@@ -66,7 +67,12 @@ export async function listTeamTodos(
   teamId: string,
   prisma: PrismaClient = db,
 ): Promise<TodoRow[]> {
-  const rows = await prisma.todo.findMany({ where: { orgId, teamId }, include: ownerInclude });
+  const rows = await prisma.todo.findMany({
+    where: { orgId, teamId },
+    include: ownerInclude,
+    orderBy: { dueDate: 'asc' }, // deterministic truncation at the cap; re-partitioned below
+    take: MAX_TEAM_LIST,
+  });
   const mapped = rows.map((r) => toRow(r as unknown as TodoWithOwner));
   const open = mapped.filter((t) => !t.done).sort((a, b) => a.dueDate.localeCompare(b.dueDate)); // ISO strings sort chronologically
   const done = mapped

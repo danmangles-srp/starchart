@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
 import { NotFoundError } from '@/lib/auth/errors';
+import { MAX_TEAM_LIST } from '@/lib/bounds';
 import type { IssueCounts, IssueListType, IssueRow } from '../domain/issue';
 
 type UserRef = { name: string | null; email: string };
@@ -97,6 +98,7 @@ export async function listTeamIssues(
     where: { orgId, teamId },
     include: refs,
     orderBy: [{ solved: 'asc' }, { listType: 'asc' }, { rank: 'asc' }],
+    take: MAX_TEAM_LIST,
   });
   return rows.map((r) => toRow(r as unknown as IssueWithRefs));
 }
