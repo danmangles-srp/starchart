@@ -154,6 +154,19 @@ export default function ManageMeasurablesDialog({
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
+  const blankValues = useMemo<FormValues>(
+    () => ({
+      name: '',
+      ownerId: members[0]?.userId ?? '',
+      goalValue: 0,
+      goalMax: null,
+      comparator: 'GTE',
+      format: 'NUMBER',
+      unit: '',
+    }),
+    [members],
+  );
+
   const {
     register,
     handleSubmit,
@@ -162,15 +175,7 @@ export default function ManageMeasurablesDialog({
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(MeasurableFieldsSchema),
-    defaultValues: {
-      name: '',
-      ownerId: members[0]?.userId ?? '',
-      goalValue: 0,
-      goalMax: null,
-      comparator: 'GTE',
-      format: 'NUMBER',
-      unit: '',
-    },
+    defaultValues: blankValues,
   });
   const comparator = useWatch({ control, name: 'comparator' });
 
@@ -192,15 +197,7 @@ export default function ManageMeasurablesDialog({
 
   function cancelEdit() {
     setEditingId(null);
-    reset({
-      name: '',
-      ownerId: members[0]?.userId ?? '',
-      goalValue: 0,
-      goalMax: null,
-      comparator: 'GTE',
-      format: 'NUMBER',
-      unit: '',
-    });
+    reset(blankValues);
   }
 
   const onSubmit = handleSubmit(async (values) => {
@@ -251,7 +248,9 @@ export default function ManageMeasurablesDialog({
       if (!res.ok) {
         setOrder(previous);
         setError(res.message ?? 'Could not save the new order.');
+        return;
       }
+      router.refresh(); // re-pull the server order, consistent with the other mutations
     });
   }
 
