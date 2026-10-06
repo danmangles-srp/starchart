@@ -8,16 +8,25 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import TuneIcon from '@mui/icons-material/Tune';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import EmptyState from '@/components/states/EmptyState';
 import type { ScorecardRowVM, ScorecardVM } from '../domain/viewModel';
 import { applyCellEdit, findChangedWeek, normalizeEntryValue } from '../domain/editing';
+import { buildTrend } from '../domain/trend';
 import { setWeeklyEntryAction } from '../server/actions';
 import GoalCell from './GoalCell';
 import ManageMeasurablesDialog from './ManageMeasurablesDialog';
+import TrendChart from './TrendChart';
+
+const SUMMARY_COL_WIDTH = 150;
 
 const NAME_COL_WIDTH = 240;
 const WEEK_COL_WIDTH = 92;
@@ -26,12 +35,27 @@ const WEEK_COL_WIDTH = 92;
  * The Scorecard grid (FR-4.2): rows = measurables, columns = the trailing 13 ISO
  * weeks newest-left, current week highlighted. Cells carry color + marker + a11y
  * label via GoalCell. DataGrid gives arrow-key cell navigation out of the box.
- * Inline editing arrives in T3.4.
+ * Inline cell editing is optimistic (T3.4); a per-row summary column opens the
+ * 13-week trend (T3.6); managers get the measurable-management dialog (T3.5).
  */
 export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
+  const [trendRowId, setTrendRowId] = useState<string | null>(null);
+  const trendRow = trendRowId ? (vm.rows.find((r) => r.id === trendRowId) ?? null) : null;
+
+  const trendDialog = trendRow ? (
+    <Dialog open onClose={() => setTrendRowId(null)} fullWidth maxWidth="sm">
+      <DialogTitle>13-week trend</DialogTitle>
+      <DialogContent dividers>
+        <TrendChart row={trendRow} trend={buildTrend(trendRow, vm.weeks)} />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={() => setTrendRowId(null)}>Close</Button>
+      </DialogActions>
+    </Dialog>
+  ) : null;
 
   const manageDialog = vm.canManage ? (
     <ManageMeasurablesDialog
@@ -79,9 +103,6 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
           <Typography variant="caption" color="text.secondary" noWrap>
             {params.row.ownerName} · {params.row.goalLabel}
           </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {params.row.summary}
-          </Typography>
         </Stack>
       ),
     };
@@ -115,7 +136,27 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
       },
     }));
 
-    return [measurableCol, ...weekCols];
+    const summaryCol: GridColDef<ScorecardRowVM> = {
+      field: 'summary',
+      headerName: '13-wk',
+      width: SUMMARY_COL_WIDTH,
+      sortable: false,
+      disableColumnMenu: true,
+      valueGetter: (_value, row) => row.summary,
+      renderCell: (params) => (
+        <Button
+          size="small"
+          startIcon={<ShowChartIcon fontSize="small" />}
+          onClick={() => setTrendRowId(params.row.id)}
+          aria-label={`Open trend for ${params.row.name}`}
+          sx={{ textTransform: 'none' }}
+        >
+          {params.row.summary}
+        </Button>
+      ),
+    };
+
+    return [measurableCol, ...weekCols, summaryCol];
   }, [vm.weeks, vm.canEdit]);
 
   function page(deltaWeeks: number) {
@@ -204,6 +245,7 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
         </Alert>
       </Snackbar>
       {manageDialog}
+      {trendDialog}
     </Box>
   );
 }

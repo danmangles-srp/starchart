@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/theme/theme';
@@ -175,6 +175,14 @@ describe('ScorecardGrid', () => {
     const cell = screen.getByLabelText('Week 40: 48 calls, off goal').closest('[role="gridcell"]');
     await user.dblClick(cell!);
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
+  });
+
+  it('opens the 13-week trend from the summary cell', async () => {
+    const user = userEvent.setup();
+    renderGrid(vm());
+    await user.click(screen.getByRole('button', { name: /open trend for calls/i }));
+    const dialog = await screen.findByRole('dialog', { name: /13-week trend/i });
+    expect(within(dialog).getByRole('table')).toBeInTheDocument();
   });
 
   it('shows Manage only to managers and opens the manage dialog', async () => {
