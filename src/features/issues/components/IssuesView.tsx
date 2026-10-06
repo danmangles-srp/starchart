@@ -49,8 +49,15 @@ export default function IssuesView({
   const [error, setError] = useState<string | null>(null);
   const [dialogFor, setDialogFor] = useState<IssueListType | null>(null);
 
-  const short = useMemo(() => issues.filter((i) => i.listType === 'SHORT' && !i.solved), [issues]);
-  const long = useMemo(() => issues.filter((i) => i.listType === 'LONG' && !i.solved), [issues]);
+  // Sort by rank here so the top-3 emphasis + badges don't depend on the repo's order.
+  const short = useMemo(
+    () => issues.filter((i) => i.listType === 'SHORT' && !i.solved).sort((a, b) => a.rank - b.rank),
+    [issues],
+  );
+  const long = useMemo(
+    () => issues.filter((i) => i.listType === 'LONG' && !i.solved).sort((a, b) => a.rank - b.rank),
+    [issues],
+  );
 
   const {
     register,
