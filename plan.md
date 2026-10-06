@@ -381,7 +381,7 @@ Built **before** Issues so the Issues→Todo conversion has a target. **ACs:** F
 **Objective:** short-term + long-term lists with ranking, the solve flow, and conversion of a solved
 issue into a Todo or Rock with a two-way link. **ACs:** FR-5.
 
-- **T5.1 — Issues schema + data access.**
+- **COMPLETE (#31) · T5.1 — Issues schema + data access.**
   `Build:` `Issue` (title, description, raiserId, ownerId?, listType ∈ {SHORT, LONG}, rank, solved,
   solvedAt, solvedById, resolutionNote, createdTodoId?, createdRockId?); scoped data-access; expose
   `myItemsFor` (assigned to me) + `teamSummary` (INV-9). `Gate:` repository + scoping tests. `ACs:`

@@ -1,0 +1,111 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from '@/theme/theme';
+import IssuesView from './IssuesView';
+import type { IssueListType, IssueRow } from '../domain/issue';
+
+type Result = { ok: boolean; error?: string; message?: string; data?: unknown };
+const h = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  createIssueAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { id: 'x' } })),
+}));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: h.refresh, push: vi.fn() }) }));
+vi.mock('../server/actions', () => ({ createIssueAction: h.createIssueAction }));
+
+const members = [{ userId: 'u1', name: 'Alice' }];
+
+let seq = 0;
+function issue(title: string, listType: IssueListType, over: Partial<IssueRow> = {}): IssueRow {
+  seq += 1;
+  return {
+    id: `i${seq}`,
+    title,
+    description: null,
+    teamId: 'mk1',
+    raiserId: 'u1',
+    raiserName: 'Alice',
+    ownerId: null,
+    ownerName: null,
+    listType,
+    rank: seq,
+    solved: false,
+    solvedAt: null,
+    solvedById: null,
+    resolutionNote: null,
+    createdTodoId: null,
+    createdRockId: null,
+    ...over,
+  };
+}
+
+function renderView(issues: IssueRow[], canEdit = true) {
+  return render(
+    <ThemeProvider theme={theme}>
+      <IssuesView teamId="mk1" issues={issues} members={members} canEdit={canEdit} />
+    </ThemeProvider>,
+  );
+}
+
+describe('IssuesView', () => {
+  beforeEach(() => {
+    seq = 0;
+    h.refresh.mockReset();
+    h.createIssueAction.mockReset().mockResolvedValue({ ok: true, data: { id: 'x' } });
+  });
+
+  it('shows the empty state when there are no open issues', () => {
+    renderView([]);
+    expect(screen.getByText('No issues yet')).toBeInTheDocument();
+  });
+
+  it('splits short-term and long-term lists', () => {
+    renderView([issue('Slow site', 'SHORT'), issue('Rebrand', 'LONG')]);
+    const shortList = screen.getByRole('region', { name: /short-term/i });
+    const longList = screen.getByRole('region', { name: /long-term/i });
+    expect(within(shortList).getByText('Slow site')).toBeInTheDocument();
+    expect(within(longList).getByText('Rebrand')).toBeInTheDocument();
+  });
+
+  it('emphasizes the top 3 short-term issues with rank badges', () => {
+    renderView([
+      issue('One', 'SHORT'),
+      issue('Two', 'SHORT'),
+      issue('Three', 'SHORT'),
+      issue('Four', 'SHORT'),
+    ]);
+    const shortList = screen.getByRole('region', { name: /short-term/i });
+    expect(within(shortList).getByText('#1')).toBeInTheDocument();
+    expect(within(shortList).getByText('#3')).toBeInTheDocument();
+    expect(within(shortList).queryByText('#4')).not.toBeInTheDocument(); // only top 3
+  });
+
+  it('raises an issue through the dialog', async () => {
+    const user = userEvent.setup();
+    renderView([]);
+    await user.click(screen.getByRole('button', { name: /raise an issue/i }));
+    await user.type(screen.getByLabelText('Title'), 'Printer broken');
+    await user.click(screen.getByRole('button', { name: /^add$/i }));
+    await waitFor(() =>
+      expect(h.createIssueAction).toHaveBeenCalledWith(
+        expect.objectContaining({ teamId: 'mk1', title: 'Printer broken', listType: 'SHORT' }),
+      ),
+    );
+    expect(h.refresh).toHaveBeenCalled();
+  });
+
+  it('validates a required title', async () => {
+    const user = userEvent.setup();
+    renderView([]);
+    await user.click(screen.getByRole('button', { name: /raise an issue/i }));
+    await user.click(screen.getByRole('button', { name: /^add$/i }));
+    expect(await screen.findByText('Title is required')).toBeInTheDocument();
+    expect(h.createIssueAction).not.toHaveBeenCalled();
+  });
+
+  it('hides add controls when the viewer cannot edit', () => {
+    renderView([issue('Slow site', 'SHORT')], false);
+    expect(screen.queryByRole('button', { name: /^add$/i })).not.toBeInTheDocument();
+  });
+});
