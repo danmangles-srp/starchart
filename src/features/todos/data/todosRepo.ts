@@ -59,18 +59,19 @@ export async function createTodo(orgId: string, input: CreateTodoInput, prisma: 
   });
 }
 
-/** A team's Todos — open first (by due date), then completed (most recent first). */
+/** A team's Todos — open first (soonest due), then completed (most recently completed first). */
 export async function listTeamTodos(
   orgId: string,
   teamId: string,
   prisma: PrismaClient = db,
 ): Promise<TodoRow[]> {
-  const rows = await prisma.todo.findMany({
-    where: { orgId, teamId },
-    include: ownerInclude,
-    orderBy: [{ done: 'asc' }, { dueDate: 'asc' }],
-  });
-  return rows.map((r) => toRow(r as unknown as TodoWithOwner));
+  const rows = await prisma.todo.findMany({ where: { orgId, teamId }, include: ownerInclude });
+  const mapped = rows.map((r) => toRow(r as unknown as TodoWithOwner));
+  const open = mapped.filter((t) => !t.done).sort((a, b) => a.dueDate.localeCompare(b.dueDate)); // ISO strings sort chronologically
+  const done = mapped
+    .filter((t) => t.done)
+    .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
+  return [...open, ...done];
 }
 
 /** INV-9: a user's open Todos across all their teams, due-soonest first ("My Todos", M4.4). */
