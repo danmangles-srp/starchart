@@ -365,7 +365,7 @@ Built **before** Issues so the Issues→Todo conversion has a target. **ACs:** F
   `Build:` open/done lists; add (RHF + Zod, **due default +7**), edit/delete; four states. `Gate:`
   component tests per state + add/validation. `ACs:` FR-6.1, NFR-9.1. `Inv:` INV-1, INV-7. `Deps:` T4.1,
   T0.4. `Ask:` —
-- **T4.3 — Complete, overdue & carry-over.**
+- **COMPLETE (#29) · T4.3 — Complete, overdue & carry-over.**
   `Build:` optimistic done/undone; **overdue cue = color + icon/label**; age indicator on carried-over
   items (pure overdue/age helper). `Gate:` overdue/age unit tests + optimistic-rollback test. `ACs:`
   FR-6.3, FR-6.4, NFR-3.3, NFR-5.1. `Inv:` INV-3, INV-5, INV-6. `Deps:` T4.2. `Ask:` —
