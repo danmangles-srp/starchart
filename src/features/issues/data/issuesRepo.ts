@@ -66,7 +66,9 @@ export async function createIssue(
   input: CreateIssueInput,
   prisma: PrismaClient = db,
 ) {
-  // Append to the end of its list (open issues ranked ascending).
+  // Append after every issue in the list — count all (incl. solved) so a new
+  // rank never collides with one a solved issue still holds. Explicit reordering
+  // lands in T5.3; ties under rare concurrent creates are resolved there.
   const count = await prisma.issue.count({
     where: { orgId, teamId: input.teamId, listType: input.listType },
   });
