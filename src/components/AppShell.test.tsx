@@ -77,6 +77,11 @@ describe('AppShell', () => {
     expect(main).toHaveAttribute('id', 'main-content');
   });
 
+  it('offers a mobile search entry linking to /search', () => {
+    renderShell();
+    expect(screen.getByRole('link', { name: 'Search' })).toHaveAttribute('href', '/search');
+  });
+
   it('submits the search box to /search', async () => {
     renderShell();
     const input = screen.getByRole('searchbox', { name: /search/i });

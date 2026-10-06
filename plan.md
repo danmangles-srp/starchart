@@ -162,7 +162,7 @@ the PR.** Don't re-ask a resolved decision.
 | M4 Todos | **COMPLETE** |
 | M5 Issues (incl. solve → convert) | **IN PROGRESS** |
 | M6 My Week home + Team dashboards | **COMPLETE** |
-| M7 Polish: search, notifications, a11y/perf/responsive | **IN PROGRESS** |
+| M7 Polish: search, notifications, a11y/perf/responsive | **COMPLETE** (T7.1–T7.4; an in-app notification center was scoped as an Idea, not a v1 ticket) |
 
 ---
 
@@ -450,7 +450,7 @@ FR-7.
   `Build:` Scorecard virtualization/efficiency to NFR-2.2, route prefetch, bundle trim, bounded-query
   audit. `Gate:` perf-sensitive unit tests; documented measurements vs NFR-2. `ACs:` NFR-2.\*. `Inv:`
   INV-2. `Deps:` M6. `Ask:` —
-- **T7.4 — Responsive & design-review sweep.**
+- **COMPLETE · T7.4 — Responsive & design-review sweep.**
   `Build:` tablet/phone layouts (drawer collapse, grid horizontal scroll, stacked dashboards),
   empty/error polish, and a full `/design-review` pass across all screens to ≥ 4/5. `Gate:` responsive
   component tests at breakpoints; design scorecards in the PR. `ACs:` NFR-7.2, NFR-9.1. `Inv:` INV-6,
