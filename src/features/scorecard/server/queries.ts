@@ -77,6 +77,11 @@ export async function loadTeamScorecard(
       ownerName: m.ownerName,
       goalLabel: formatGoal(m.comparator, m.goalValue, m.goalMax, m.format, m.unit),
       summary: summarizeRow(orderedValues, m.comparator, m.goalValue, m.goalMax).hitRate,
+      comparator: m.comparator,
+      goalValue: m.goalValue,
+      goalMax: m.goalMax,
+      format: m.format,
+      unit: m.unit,
       cellsByWeek,
     };
   });

@@ -1,15 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/theme/theme';
 import ScorecardGrid from './ScorecardGrid';
 import type { ScorecardVM } from '../domain/viewModel';
 
-const h = vi.hoisted(() => ({ push: vi.fn() }));
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: h.push, refresh: vi.fn() }),
+type Result = { ok: boolean; error?: string; message?: string; data?: unknown };
+const h = vi.hoisted(() => ({
+  push: vi.fn(),
+  refresh: vi.fn(),
+  setWeeklyEntryAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
 }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: h.push, refresh: h.refresh }),
+}));
+vi.mock('../server/actions', () => ({ setWeeklyEntryAction: h.setWeeklyEntryAction }));
 
 function vm(overrides: Partial<ScorecardVM> = {}): ScorecardVM {
   return {
@@ -30,6 +36,11 @@ function vm(overrides: Partial<ScorecardVM> = {}): ScorecardVM {
         ownerName: 'Alice',
         goalLabel: '≥ 50 calls',
         summary: '1/2 on goal',
+        comparator: 'GTE',
+        goalValue: 50,
+        goalMax: null,
+        format: 'NUMBER',
+        unit: 'calls',
         cellsByWeek: {
           '2026-40': { value: 48, status: 'off', display: '48 calls' },
           '2026-39': { value: 60, status: 'on', display: '60 calls' },
@@ -50,7 +61,11 @@ function renderGrid(model: ScorecardVM) {
 }
 
 describe('ScorecardGrid', () => {
-  beforeEach(() => h.push.mockReset());
+  beforeEach(() => {
+    h.push.mockReset();
+    h.refresh.mockReset();
+    h.setWeeklyEntryAction.mockReset().mockResolvedValue({ ok: true, data: {} });
+  });
 
   it('renders the measurable with its owner, goal and hit-rate', () => {
     renderGrid(vm());
@@ -101,5 +116,51 @@ describe('ScorecardGrid', () => {
   it('shows an empty state when there are no measurables', () => {
     renderGrid(vm({ rows: [] }));
     expect(screen.getByText('No measurables yet')).toBeInTheDocument();
+  });
+
+  async function editCell(user: ReturnType<typeof userEvent.setup>, value: string) {
+    const cellContent = screen.getByLabelText('Week 40: 48 calls, off goal');
+    const cell = cellContent.closest('[role="gridcell"]');
+    expect(cell).not.toBeNull();
+    await user.dblClick(cell!);
+    const input = await screen.findByRole('spinbutton');
+    await user.clear(input);
+    await user.type(input, `${value}{Enter}`);
+  }
+
+  it('saves an inline edit optimistically and refreshes', async () => {
+    const user = userEvent.setup();
+    renderGrid(vm());
+    await editCell(user, '60');
+    await waitFor(() =>
+      expect(h.setWeeklyEntryAction).toHaveBeenCalledWith({
+        measurableId: 'm1',
+        isoYear: 2026,
+        isoWeek: 40,
+        value: 60,
+      }),
+    );
+    await waitFor(() => expect(h.refresh).toHaveBeenCalled());
+  });
+
+  it('surfaces an error when the save is rejected (rollback path)', async () => {
+    h.setWeeklyEntryAction.mockResolvedValue({
+      ok: false,
+      error: 'forbidden',
+      message: 'No access',
+    });
+    const user = userEvent.setup();
+    renderGrid(vm());
+    await editCell(user, '60');
+    expect(await screen.findByText('No access')).toBeInTheDocument();
+    expect(h.refresh).not.toHaveBeenCalled();
+  });
+
+  it('does not allow editing when the viewer cannot edit', async () => {
+    const user = userEvent.setup();
+    renderGrid(vm({ canEdit: false }));
+    const cell = screen.getByLabelText('Week 40: 48 calls, off goal').closest('[role="gridcell"]');
+    await user.dblClick(cell!);
+    expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
   });
 });

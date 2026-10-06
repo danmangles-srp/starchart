@@ -88,7 +88,24 @@ export async function createMeasurable(
   });
 }
 
-/** Set/clear one week's value. null = empty (distinct from 0). orgId-scoped via the measurable. */
+/** The team a measurable belongs to, or null if it isn't in this org (authz for entry writes). */
+export async function getMeasurableTeamId(
+  orgId: string,
+  measurableId: string,
+  prisma: PrismaClient = db,
+): Promise<string | null> {
+  const m = await prisma.measurable.findFirst({
+    where: { id: measurableId, orgId },
+    select: { teamId: true },
+  });
+  return m?.teamId ?? null;
+}
+
+/**
+ * Set/clear one week's value. null = empty (distinct from 0). orgId-scoped via the
+ * measurable. Returns the measurable's teamId so callers can revalidate without a
+ * second lookup.
+ */
 export async function upsertWeeklyEntry(
   orgId: string,
   measurableId: string,
@@ -96,10 +113,10 @@ export async function upsertWeeklyEntry(
   isoWeek: number,
   value: number | null,
   prisma: PrismaClient = db,
-): Promise<void> {
+): Promise<string> {
   const measurable = await prisma.measurable.findFirst({
     where: { id: measurableId, orgId },
-    select: { id: true },
+    select: { teamId: true },
   });
   if (!measurable) throw new NotFoundError('Measurable not found.');
   await prisma.weeklyEntry.upsert({
@@ -107,6 +124,7 @@ export async function upsertWeeklyEntry(
     update: { value },
     create: { measurableId, isoYear, isoWeek, value },
   });
+  return measurable.teamId;
 }
 
 /** Entries for a team's measurables across the given weeks (bounded, NFR-2.3). */

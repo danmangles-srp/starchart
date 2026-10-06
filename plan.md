@@ -315,7 +315,7 @@ evaluation, and trends. **ACs:** FR-4.
   math (13-week trailing window, Monday start, window paging); row summary (avg/total + hit-rate "9/13 on
   goal"). `Gate:` domain unit tests (each comparator, week boundaries, empty vs 0). `ACs:` FR-4.3, FR-4.2.
   `Inv:` INV-3, INV-4. `Deps:` none. `Ask:` —
-- **T3.3 — Scorecard grid (MUI X DataGrid).**
+- **COMPLETE (#22) · T3.3 — Scorecard grid (MUI X DataGrid).**
   `Build:` rows = measurables, **columns = 13 ISO weeks, newest-left** (FR-4.2), current-week highlight,
   window paging, `GoalCell` (green/red **+ marker + a11y label**), keyboard nav (arrows/Enter), row header
   = measurable. Admin can view/edit any team. `Gate:` component tests (render, color+marker, keyboard nav,

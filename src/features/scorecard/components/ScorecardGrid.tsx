@@ -1,16 +1,20 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import EmptyState from '@/components/states/EmptyState';
 import type { ScorecardRowVM, ScorecardVM } from '../domain/viewModel';
+import { applyCellEdit, findChangedWeek, normalizeEntryValue } from '../domain/editing';
+import { setWeeklyEntryAction } from '../server/actions';
 import GoalCell from './GoalCell';
 
 const NAME_COL_WIDTH = 240;
@@ -24,6 +28,28 @@ const WEEK_COL_WIDTH = 92;
  */
 export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+
+  // Optimistic write (INV-5): DataGrid shows the edited row immediately via the
+  // row returned here; a server rejection throws, so DataGrid rolls the cell back
+  // and onProcessRowUpdateError surfaces why.
+  const processRowUpdate = useCallback(
+    async (newRow: ScorecardRowVM, oldRow: ScorecardRowVM): Promise<ScorecardRowVM> => {
+      const week = findChangedWeek(newRow, oldRow, vm.weeks);
+      if (!week) return oldRow;
+      const value = newRow.cellsByWeek[week.key]?.value ?? null;
+      const res = await setWeeklyEntryAction({
+        measurableId: newRow.id,
+        isoYear: week.isoYear,
+        isoWeek: week.isoWeek,
+        value,
+      });
+      if (!res.ok) throw new Error(res.message ?? 'Could not save that entry.');
+      router.refresh();
+      return newRow;
+    },
+    [vm.weeks, router],
+  );
 
   const columns = useMemo<GridColDef<ScorecardRowVM>[]>(() => {
     const measurableCol: GridColDef<ScorecardRowVM> = {
@@ -55,6 +81,8 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
       disableColumnMenu: true,
       headerAlign: 'center',
       align: 'center',
+      type: 'number',
+      editable: vm.canEdit,
       headerClassName: week.current ? 'cadence-current-week' : undefined,
       cellClassName: week.current ? 'cadence-current-week' : undefined,
       renderHeader: () => (
@@ -63,7 +91,10 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
           {week.current ? ' • now' : ''}
         </Typography>
       ),
-      valueGetter: (_value, row) => row.cellsByWeek[week.key]?.display ?? '—',
+      // The number carries the value for editing + a11y; display is via GoalCell.
+      valueGetter: (_value, row) => row.cellsByWeek[week.key]?.value ?? null,
+      valueSetter: (value, row) =>
+        applyCellEdit(row, week.key, normalizeEntryValue(value as unknown)),
       renderCell: (params) => {
         const cell = params.row.cellsByWeek[week.key];
         if (!cell) return null;
@@ -72,7 +103,7 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
     }));
 
     return [measurableCol, ...weekCols];
-  }, [vm.weeks]);
+  }, [vm.weeks, vm.canEdit]);
 
   function page(deltaWeeks: number) {
     const next = Math.max(0, vm.offsetWeeks + deltaWeeks);
@@ -119,10 +150,25 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
           columnHeaderHeight={44}
           disableRowSelectionOnClick
           hideFooter
+          editMode="cell"
+          processRowUpdate={processRowUpdate}
+          onProcessRowUpdateError={(e: unknown) =>
+            setError(e instanceof Error ? e.message : 'Could not save that entry.')
+          }
           aria-label="Scorecard measurables by ISO week"
           sx={{ '--DataGrid-overlayHeight': '200px' }}
         />
       </Box>
+      <Snackbar
+        open={error !== null}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" variant="filled" onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
