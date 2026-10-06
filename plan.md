@@ -161,7 +161,7 @@ the PR.** Don't re-ask a resolved decision.
 | M3 Data / Scorecard | **IN PROGRESS** (T3.1–T3.6 done; T3.7 Google-login bug blocked on console/env) |
 | M4 Todos | **COMPLETE** |
 | M5 Issues (incl. solve → convert) | **IN PROGRESS** |
-| M6 My Week home + Team dashboards | PLANNED |
+| M6 My Week home + Team dashboards | **IN PROGRESS** |
 | M7 Polish: search, notifications, a11y/perf/responsive | PLANNED |
 
 ---
@@ -398,7 +398,7 @@ issue into a Todo or Rock with a two-way link. **ACs:** FR-5.
   `Build:` mark solved (+ optional resolution note), record solver/solved-at (activity log), move to a
   solved/archived view (still readable); optimistic. `Gate:` solve + archive + rollback tests. `ACs:`
   FR-5.4, FR-2.6, NFR-5.1. `Inv:` INV-1, INV-5, INV-10. `Deps:` T5.2, T1.6. `Ask:` —
-- **T5.5 — Convert to Todo / Rock.**
+- **DEFERRED (user skip) · T5.5 — Convert to Todo / Rock.**
   `Build:` from a solving issue, create a Todo (due +7) or a Rock, pre-filled, on the same team, with a
   **two-way link** both directions. `Gate:` conversion unit tests (fields carried, links set both ways).
   `ACs:` FR-5.5. `Inv:` INV-1. `Deps:` T5.4, T4.1, T2.1. `Ask:` —
@@ -411,7 +411,7 @@ issue into a Todo or Rock with a two-way link. **ACs:** FR-5.
 a summary dashboard as its landing — **assembled from the INV-9 contracts**, not new reach-ins. **ACs:**
 FR-7.
 
-- **T6.1 — Aggregation assembly.**
+- **COMPLETE · T6.1 — Aggregation assembly.**
   `Build:` compose each module's `myItemsFor(user)` (current-quarter Rocks, open/overdue Todos, red
   measurables I own, Issues assigned to me) and `teamSummary(teamId)` into My-Week and team-dashboard
   view models; pure shaping; bounded (NFR-2.3). `Gate:` aggregation unit tests across multiple teams.
