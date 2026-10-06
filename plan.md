@@ -416,7 +416,7 @@ FR-7.
   measurables I own, Issues assigned to me) and `teamSummary(teamId)` into My-Week and team-dashboard
   view models; pure shaping; bounded (NFR-2.3). `Gate:` aggregation unit tests across multiple teams.
   `ACs:` FR-7.1, FR-7.2. `Inv:` INV-3, INV-9. `Deps:` T2.1, T3.1, T4.1, T5.1. `Ask:` —
-- **T6.2 — My Week home.**
+- **COMPLETE · T6.2 — My Week home.**
   `Build:` the personal landing — four aggregate panels, deep links (INV-8), four states (inviting
   empty); becomes the post-login route. `Gate:` component tests per state + deep-link targets. `ACs:`
   FR-7.1, NFR-9.1. `Inv:` INV-6, INV-7, INV-8. `Deps:` T6.1. `Ask:` —

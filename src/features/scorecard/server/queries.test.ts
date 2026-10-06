@@ -31,6 +31,7 @@ const admin: Viewer = { id: 'u3', orgId: 'org1', isAdmin: true, memberships: [] 
 const measurable: MeasurableRow = {
   id: 'm1',
   name: 'Calls',
+  teamId: 'mk1',
   ownerId: 'u1',
   ownerName: 'Alice',
   goalValue: 50,
