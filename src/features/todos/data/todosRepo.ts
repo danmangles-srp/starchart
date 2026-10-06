@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
+import { NotFoundError } from '@/lib/auth/errors';
 import { isOverdue, type TodoCounts, type TodoRow } from '../domain/todo';
 
 type TodoWithOwner = {
@@ -72,6 +73,82 @@ export async function listTeamTodos(
     .filter((t) => t.done)
     .sort((a, b) => (b.completedAt ?? '').localeCompare(a.completedAt ?? ''));
   return [...open, ...done];
+}
+
+/** The team a todo belongs to, or null if it isn't in this org (authz for todo writes). */
+export async function getTodoTeamId(
+  orgId: string,
+  todoId: string,
+  prisma: PrismaClient = db,
+): Promise<string | null> {
+  const t = await prisma.todo.findFirst({ where: { id: todoId, orgId }, select: { teamId: true } });
+  return t?.teamId ?? null;
+}
+
+export interface UpdateTodoInput {
+  title: string;
+  notes?: string | null;
+  ownerId: string;
+  dueDate: Date;
+}
+
+/** Edit a todo's fields (not its done state). orgId-scoped. Returns its teamId. */
+export async function updateTodo(
+  orgId: string,
+  todoId: string,
+  input: UpdateTodoInput,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.todo.findFirst({
+    where: { id: todoId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Todo not found.');
+  await prisma.todo.update({
+    where: { id: todoId },
+    data: {
+      title: input.title,
+      notes: input.notes ?? null,
+      ownerId: input.ownerId,
+      dueDate: input.dueDate,
+    },
+  });
+  return existing.teamId;
+}
+
+/** Set/clear a todo's done state, stamping completedAt. orgId-scoped. Returns its teamId. */
+export async function setTodoDone(
+  orgId: string,
+  todoId: string,
+  done: boolean,
+  now: Date,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.todo.findFirst({
+    where: { id: todoId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Todo not found.');
+  await prisma.todo.update({
+    where: { id: todoId },
+    data: { done, completedAt: done ? now : null },
+  });
+  return existing.teamId;
+}
+
+/** Hard-delete a todo (7-day items aren't archived). orgId-scoped. Returns its teamId. */
+export async function deleteTodo(
+  orgId: string,
+  todoId: string,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.todo.findFirst({
+    where: { id: todoId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Todo not found.');
+  await prisma.todo.delete({ where: { id: todoId } });
+  return existing.teamId;
 }
 
 /** INV-9: a user's open Todos across all their teams, due-soonest first ("My Todos", M4.4). */

@@ -357,7 +357,7 @@ evaluation, and trends. **ACs:** FR-4.
 **Objective:** 7-day action items — owner, due date, completion, carry-over, and a cross-team "My Todos".
 Built **before** Issues so the Issues→Todo conversion has a target. **ACs:** FR-6.
 
-- **T4.1 — Todos schema + data access.**
+- **COMPLETE (#27) · T4.1 — Todos schema + data access.**
   `Build:` `Todo` (title, notes, ownerId, teamId, dueDate, done, completedAt, sourceIssueId?,
   sourceRockId?); scoped data-access; expose `myItemsFor` + `teamSummary` (INV-9). `Gate:` repository +
   scoping tests. `ACs:` FR-6.1, FR-6.2, NFR-1.3. `Inv:` INV-2, INV-9. `Deps:` T1.3. `Ask:` —
