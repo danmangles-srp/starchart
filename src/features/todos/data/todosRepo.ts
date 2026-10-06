@@ -111,6 +111,26 @@ export async function updateTodo(
   if (result.count === 0) throw new NotFoundError('Todo not found.');
 }
 
+/** Set/clear a todo's done state, stamping completedAt. orgId-scoped. Returns its teamId. */
+export async function setTodoDone(
+  orgId: string,
+  todoId: string,
+  done: boolean,
+  now: Date,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.todo.findFirst({
+    where: { id: todoId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Todo not found.');
+  await prisma.todo.update({
+    where: { id: todoId },
+    data: { done, completedAt: done ? now : null },
+  });
+  return existing.teamId;
+}
+
 /** Hard-delete a todo (7-day items aren't archived). orgId-scoped. Returns its teamId. */
 export async function deleteTodo(
   orgId: string,
