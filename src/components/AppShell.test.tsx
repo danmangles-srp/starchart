@@ -69,6 +69,13 @@ describe('AppShell', () => {
     expect(screen.getByText(/Q[1-4] \d{4} · W\d{1,2}/)).toBeInTheDocument();
   });
 
+  it('submits the search box to /search', async () => {
+    renderShell();
+    const input = screen.getByRole('searchbox', { name: /search/i });
+    await userEvent.type(input, 'launch{Enter}');
+    expect(push).toHaveBeenCalledWith('/search?q=launch');
+  });
+
   it('opens the temporary drawer from the menu button', async () => {
     renderShell();
     const menu = screen.getByRole('button', { name: /open navigation/i });
