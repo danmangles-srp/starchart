@@ -10,12 +10,14 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import TuneIcon from '@mui/icons-material/Tune';
 import { DataGrid, type GridColDef } from '@mui/x-data-grid';
 import EmptyState from '@/components/states/EmptyState';
 import type { ScorecardRowVM, ScorecardVM } from '../domain/viewModel';
 import { applyCellEdit, findChangedWeek, normalizeEntryValue } from '../domain/editing';
 import { setWeeklyEntryAction } from '../server/actions';
 import GoalCell from './GoalCell';
+import ManageMeasurablesDialog from './ManageMeasurablesDialog';
 
 const NAME_COL_WIDTH = 240;
 const WEEK_COL_WIDTH = 92;
@@ -29,6 +31,17 @@ const WEEK_COL_WIDTH = 92;
 export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
+
+  const manageDialog = vm.canManage ? (
+    <ManageMeasurablesDialog
+      open={manageOpen}
+      onClose={() => setManageOpen(false)}
+      teamId={vm.teamId}
+      rows={vm.rows}
+      members={vm.members}
+    />
+  ) : null;
 
   // Optimistic write (INV-5): DataGrid shows the edited row immediately via the
   // row returned here; a server rejection throws, so DataGrid rolls the cell back
@@ -118,18 +131,39 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
           onPage={page}
           hasNewer={vm.hasNewer}
           hasOlder={vm.hasOlder}
+          canManage={vm.canManage}
+          onManage={() => setManageOpen(true)}
         />
         <EmptyState
           title="No measurables yet"
           description="Measurables you add will track weekly against their goal across the trailing 13 weeks."
+          action={
+            vm.canManage ? (
+              <Button
+                variant="contained"
+                startIcon={<TuneIcon />}
+                onClick={() => setManageOpen(true)}
+              >
+                Add a measurable
+              </Button>
+            ) : undefined
+          }
         />
+        {manageDialog}
       </Box>
     );
   }
 
   return (
     <Box>
-      <Header offset={vm.offsetWeeks} onPage={page} hasNewer={vm.hasNewer} hasOlder={vm.hasOlder} />
+      <Header
+        offset={vm.offsetWeeks}
+        onPage={page}
+        hasNewer={vm.hasNewer}
+        hasOlder={vm.hasOlder}
+        canManage={vm.canManage}
+        onManage={() => setManageOpen(true)}
+      />
       <Box
         sx={{
           '& .cadence-current-week': {
@@ -169,6 +203,7 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
           {error}
         </Alert>
       </Snackbar>
+      {manageDialog}
     </Box>
   );
 }
@@ -178,11 +213,15 @@ function Header({
   onPage,
   hasNewer,
   hasOlder,
+  canManage,
+  onManage,
 }: {
   offset: number;
   onPage: (deltaWeeks: number) => void;
   hasNewer: boolean;
   hasOlder: boolean;
+  canManage: boolean;
+  onManage: () => void;
 }) {
   return (
     <Stack
@@ -220,6 +259,11 @@ function Header({
         >
           Newer
         </Button>
+        {canManage ? (
+          <Button size="small" variant="contained" startIcon={<TuneIcon />} onClick={onManage}>
+            Manage
+          </Button>
+        ) : null}
       </Stack>
     </Stack>
   );

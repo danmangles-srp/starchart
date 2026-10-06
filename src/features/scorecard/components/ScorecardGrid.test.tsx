@@ -11,11 +11,21 @@ const h = vi.hoisted(() => ({
   push: vi.fn(),
   refresh: vi.fn(),
   setWeeklyEntryAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
+  createMeasurableAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { id: 'x' } })),
+  updateMeasurableAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { id: 'x' } })),
+  archiveMeasurableAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
+  reorderMeasurablesAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
 }));
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: h.push, refresh: h.refresh }),
 }));
-vi.mock('../server/actions', () => ({ setWeeklyEntryAction: h.setWeeklyEntryAction }));
+vi.mock('../server/actions', () => ({
+  setWeeklyEntryAction: h.setWeeklyEntryAction,
+  createMeasurableAction: h.createMeasurableAction,
+  updateMeasurableAction: h.updateMeasurableAction,
+  archiveMeasurableAction: h.archiveMeasurableAction,
+  reorderMeasurablesAction: h.reorderMeasurablesAction,
+}));
 
 function vm(overrides: Partial<ScorecardVM> = {}): ScorecardVM {
   return {
@@ -24,6 +34,8 @@ function vm(overrides: Partial<ScorecardVM> = {}): ScorecardVM {
     hasOlder: true,
     hasNewer: false,
     canEdit: true,
+    canManage: false,
+    members: [{ userId: 'u1', name: 'Alice' }],
     weeks: [
       { key: '2026-40', isoYear: 2026, isoWeek: 40, label: 'W40', current: true },
       { key: '2026-39', isoYear: 2026, isoWeek: 39, label: 'W39', current: false },
@@ -33,6 +45,7 @@ function vm(overrides: Partial<ScorecardVM> = {}): ScorecardVM {
       {
         id: 'm1',
         name: 'Calls',
+        ownerId: 'u1',
         ownerName: 'Alice',
         goalLabel: '≥ 50 calls',
         summary: '1/2 on goal',
@@ -162,5 +175,19 @@ describe('ScorecardGrid', () => {
     const cell = screen.getByLabelText('Week 40: 48 calls, off goal').closest('[role="gridcell"]');
     await user.dblClick(cell!);
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
+  });
+
+  it('shows Manage only to managers and opens the manage dialog', async () => {
+    const user = userEvent.setup();
+    const { rerender } = renderGrid(vm({ canManage: false }));
+    expect(screen.queryByRole('button', { name: /manage/i })).not.toBeInTheDocument();
+
+    rerender(
+      <ThemeProvider theme={theme}>
+        <ScorecardGrid vm={vm({ canManage: true })} />
+      </ThemeProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: /^manage$/i }));
+    expect(await screen.findByRole('dialog', { name: /manage measurables/i })).toBeInTheDocument();
   });
 });

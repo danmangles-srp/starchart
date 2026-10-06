@@ -12,6 +12,9 @@ vi.mock('../data/scorecardRepo', () => ({
   listMeasurables: h.listMeasurables,
   getWeeklyEntries: h.getWeeklyEntries,
 }));
+vi.mock('@/features/org/data/teams', () => ({
+  listTeamMembers: vi.fn().mockResolvedValue([{ userId: 'u1', name: 'Alice' }]),
+}));
 
 import { loadTeamScorecard } from './queries';
 
@@ -51,14 +54,18 @@ describe('loadTeamScorecard — access control', () => {
     expect(h.listMeasurables).not.toHaveBeenCalled();
   });
 
-  it('lets a team member read, with edit enabled', async () => {
+  it('lets a team member read + edit, but not manage', async () => {
     const vm = await loadTeamScorecard(member, 'mk1', 0, NOW);
     expect(vm.canEdit).toBe(true);
+    expect(vm.canManage).toBe(false);
+    expect(vm.members).toEqual([]); // members only loaded for managers
   });
 
-  it('lets an Admin read any team even without membership', async () => {
+  it('lets an Admin read, edit and manage any team even without membership', async () => {
     const vm = await loadTeamScorecard(admin, 'mk1', 0, NOW);
     expect(vm.canEdit).toBe(true);
+    expect(vm.canManage).toBe(true);
+    expect(vm.members).toHaveLength(1);
     expect(vm.rows).toHaveLength(1);
   });
 });

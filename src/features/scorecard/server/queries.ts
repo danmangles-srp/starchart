@@ -1,5 +1,6 @@
 import { trailingIsoWeeks } from '@/lib/time';
-import { assertCanReadTeam, canEditTeam, type Viewer } from '@/lib/auth/permissions';
+import { assertCanReadTeam, canEditTeam, canManageTeam, type Viewer } from '@/lib/auth/permissions';
+import { listTeamMembers } from '@/features/org/data/teams';
 import {
   evaluateGoal,
   formatGoal,
@@ -45,6 +46,8 @@ export async function loadTeamScorecard(
 
   const measurables = await listMeasurables(viewer.orgId, teamId, undefined);
   const entries = await getWeeklyEntries(viewer.orgId, teamId, weeks, undefined);
+  const canManage = canManageTeam(viewer, teamId);
+  const members = canManage ? await listTeamMembers(viewer.orgId, teamId) : [];
 
   // index entries by measurable + week for O(1) cell lookup
   const byMeasurable = new Map<string, Map<string, number | null>>();
@@ -74,6 +77,7 @@ export async function loadTeamScorecard(
     return {
       id: m.id,
       name: m.name,
+      ownerId: m.ownerId,
       ownerName: m.ownerName,
       goalLabel: formatGoal(m.comparator, m.goalValue, m.goalMax, m.format, m.unit),
       summary: summarizeRow(orderedValues, m.comparator, m.goalValue, m.goalMax).hitRate,
@@ -91,6 +95,8 @@ export async function loadTeamScorecard(
     weeks: columns,
     rows,
     canEdit: canEditTeam(viewer, teamId),
+    canManage,
+    members,
     offsetWeeks: offset,
     hasOlder: offset < MAX_BACK_WEEKS,
     hasNewer: offset > 0,

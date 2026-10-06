@@ -23,6 +23,7 @@ export interface ScorecardCell {
 export interface ScorecardRowVM {
   id: string;
   name: string;
+  ownerId: string;
   ownerName: string;
   /** e.g. "≥ 50 calls". */
   goalLabel: string;
@@ -44,6 +45,10 @@ export interface ScorecardVM {
   rows: ScorecardRowVM[];
   /** The viewer may edit this team's entries (member or Admin). */
   canEdit: boolean;
+  /** The viewer may add/edit/reorder/archive measurables (Team Lead or Admin). */
+  canManage: boolean;
+  /** Team members, for the owner picker in the manage dialog. */
+  members: { userId: string; name: string }[];
   /** Window offset in weeks (0 = the trailing/current window). */
   offsetWeeks: number;
   /** An older window exists to page back to (always true for a bounded history). */
