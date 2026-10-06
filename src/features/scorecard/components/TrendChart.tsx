@@ -14,17 +14,22 @@ import type { ScorecardRowVM } from '../domain/viewModel';
  * assistive tech (NFR-3.5 — a chart is never the only way to read the numbers).
  */
 export default function TrendChart({ row, trend }: { row: ScorecardRowVM; trend: Trend }) {
+  function formatValue(v: number | null): string {
+    return formatMeasurableValue(v, row.format, row.unit);
+  }
+
   const labels = trend.points.map((p) => p.label);
   const values = trend.points.map((p) => p.value);
   const goalLine = trend.points.map(() => trend.goal);
+  // BETWEEN defines a band; draw both bounds so the chart matches the cell status.
+  const upperLine =
+    trend.comparator === 'BETWEEN' && trend.goalMax !== null
+      ? trend.points.map(() => trend.goalMax as number)
+      : null;
 
   const avgText =
     trend.average === null ? 'no entries yet' : `${formatValue(trend.average)} average`;
   const captionText = `Trend for ${row.name}: ${avgText}, ${trend.hitRate}, goal ${row.goalLabel}.`;
-
-  function formatValue(v: number | null): string {
-    return formatMeasurableValue(v, row.format, row.unit);
-  }
 
   return (
     <Box>
@@ -40,7 +45,8 @@ export default function TrendChart({ row, trend }: { row: ScorecardRowVM; trend:
           xAxis={[{ scaleType: 'point', data: labels }]}
           series={[
             { data: values, label: row.name, connectNulls: false, showMark: true },
-            { data: goalLine, label: 'Goal', showMark: false },
+            { data: goalLine, label: upperLine ? 'Lower bound' : 'Goal', showMark: false },
+            ...(upperLine ? [{ data: upperLine, label: 'Upper bound', showMark: false }] : []),
           ]}
         />
       </Box>
@@ -78,8 +84,8 @@ export default function TrendChart({ row, trend }: { row: ScorecardRowVM; trend:
         </tbody>
       </Box>
 
-      {/* A visible summary line so sighted users get the numbers without reading the axis. */}
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+      {/* Visible summary for sighted users; aria-hidden so AT hears it once (via the table caption). */}
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }} aria-hidden>
         {captionText}
       </Typography>
     </Box>
