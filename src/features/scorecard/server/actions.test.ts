@@ -29,7 +29,7 @@ const base = { measurableId: 'm1', isoYear: 2026, isoWeek: 40 };
 beforeEach(() => {
   h.requireUser.mockReset().mockResolvedValue(member);
   h.getMeasurableTeamId.mockReset().mockResolvedValue('mk1');
-  h.upsertWeeklyEntry.mockReset().mockResolvedValue(undefined);
+  h.upsertWeeklyEntry.mockReset().mockResolvedValue('mk1');
   h.revalidatePath.mockReset();
 });
 

@@ -19,15 +19,14 @@ export const setWeeklyEntryAction = authorizedAction({
     return teamId !== null && canEditTeam(viewer, teamId);
   },
   handler: async ({ viewer, input }) => {
-    await upsertWeeklyEntry(
+    const teamId = await upsertWeeklyEntry(
       viewer.orgId,
       input.measurableId,
       input.isoYear,
       input.isoWeek,
       input.value,
     );
-    const teamId = await getMeasurableTeamId(viewer.orgId, input.measurableId);
-    if (teamId) revalidatePath(`/t/${teamId}/scorecard`);
+    revalidatePath(`/t/${teamId}/scorecard`);
     return {
       measurableId: input.measurableId,
       isoYear: input.isoYear,
