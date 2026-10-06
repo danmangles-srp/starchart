@@ -33,6 +33,7 @@ model Organization {
   quarterDefinitions QuarterDefinition[]
   rocks              Rock[]
   measurables        Measurable[]
+  todos              Todo[]
 }
 
 model User {
@@ -56,6 +57,7 @@ model User {
   activityLogs ActivityLog[] @relation("ActorActivity")
   rocks        Rock[]
   measurables  Measurable[]
+  todos        Todo[]
 
   @@index([orgId])
   @@index([homeTeamId])
@@ -137,6 +139,7 @@ model Team {
   homeForUsers User[]       @relation("HomeTeam")
   rocks        Rock[]
   measurables  Measurable[]
+  todos        Todo[]
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -329,4 +332,35 @@ model WeeklyEntry {
 
   @@unique([measurableId, isoYear, isoWeek])
   @@index([measurableId])
+}
+
+// --- Todos (M4) ---
+
+/// A 7-day action item. sourceIssueId / sourceRockId are soft links to the item a
+/// Todo was converted from (FR-5.5); kept as ids (no FK) so Todos don't depend on
+/// the Issues module landing first.
+model Todo {
+  id            String    @id @default(cuid())
+  orgId         String
+  teamId        String
+  title         String
+  notes         String?
+  ownerId       String
+  dueDate       DateTime
+  done          Boolean   @default(false)
+  completedAt   DateTime?
+  sourceIssueId String?
+  sourceRockId  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  org   Organization @relation(fields: [orgId], references: [id])
+  team  Team         @relation(fields: [teamId], references: [id])
+  owner User         @relation(fields: [ownerId], references: [id])
+
+  @@index([orgId])
+  @@index([teamId])
+  @@index([ownerId])
+  @@index([ownerId, done])
+  @@index([teamId, done])
 }

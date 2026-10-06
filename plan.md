@@ -158,8 +158,8 @@ the PR.** Don't re-ask a resolved decision.
 | M0 Foundation, app shell & shared primitives | **COMPLETE** |
 | M1 Identity, Org, Teams & RBAC | **COMPLETE** |
 | M2 Rocks | **COMPLETE** |
-| M3 Data / Scorecard | **IN PROGRESS** |
-| M4 Todos | PLANNED |
+| M3 Data / Scorecard | **IN PROGRESS** (T3.1–T3.6 done; T3.7 Google-login bug blocked on console/env) |
+| M4 Todos | **IN PROGRESS** |
 | M5 Issues (incl. solve → convert) | PLANNED |
 | M6 My Week home + Team dashboards | PLANNED |
 | M7 Polish: search, notifications, a11y/perf/responsive | PLANNED |
