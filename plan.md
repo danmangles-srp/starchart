@@ -159,8 +159,8 @@ the PR.** Don't re-ask a resolved decision.
 | M1 Identity, Org, Teams & RBAC | **COMPLETE** |
 | M2 Rocks | **COMPLETE** |
 | M3 Data / Scorecard | **IN PROGRESS** (T3.1–T3.6 done; T3.7 Google-login bug blocked on console/env) |
-| M4 Todos | **IN PROGRESS** |
-| M5 Issues (incl. solve → convert) | PLANNED |
+| M4 Todos | **COMPLETE** |
+| M5 Issues (incl. solve → convert) | **IN PROGRESS** |
 | M6 My Week home + Team dashboards | PLANNED |
 | M7 Polish: search, notifications, a11y/perf/responsive | PLANNED |
 
@@ -369,6 +369,10 @@ Built **before** Issues so the Issues→Todo conversion has a target. **ACs:** F
   `Build:` optimistic done/undone; **overdue cue = color + icon/label**; age indicator on carried-over
   items (pure overdue/age helper). `Gate:` overdue/age unit tests + optimistic-rollback test. `ACs:`
   FR-6.3, FR-6.4, NFR-3.3, NFR-5.1. `Inv:` INV-3, INV-5, INV-6. `Deps:` T4.2. `Ask:` —
+- **COMPLETE (#30) · T4.4 — My Todos (cross-team).**
+  `Build:` aggregate the user's open+overdue Todos across all teams (via INV-9), due-sorted,
+  grouped/filterable by team, deep-linking into each team. `Gate:` aggregation unit + component test.
+  `ACs:` FR-6.5. `Inv:` INV-8, INV-9. `Deps:` T4.3. `Ask:` —
 
 ---
 
