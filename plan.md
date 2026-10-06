@@ -386,11 +386,11 @@ issue into a Todo or Rock with a two-way link. **ACs:** FR-5.
   solvedAt, solvedById, resolutionNote, createdTodoId?, createdRockId?); scoped data-access; expose
   `myItemsFor` (assigned to me) + `teamSummary` (INV-9). `Gate:` repository + scoping tests. `ACs:`
   FR-5.1, FR-5.2, NFR-1.3. `Inv:` INV-2, INV-9. `Deps:` T1.3. `Ask:` —
-- **T5.2 — Issues screen.**
+- **COMPLETE (#32) · T5.2 — Issues screen.**
   `Build:` short-term + long-term lists, add issue (title required, raiser defaults to me), **top-3 of
   short-term emphasized**; four states. `Gate:` component tests per state + add. `ACs:` FR-5.1, FR-5.2,
   FR-5.3 (emphasis), NFR-9.1. `Inv:` INV-1, INV-7. `Deps:` T5.1, T0.4. `Ask:` —
-- **T5.3 — Rank & move.**
+- **COMPLETE · T5.3 — Rank & move.**
   `Build:` reorder within a list (dnd-kit) with persisted rank; move an issue between short-term and
   long-term. `Gate:` reorder-persist + move tests. `ACs:` FR-5.3, FR-5.1. `Inv:` INV-1, INV-5. `Deps:`
   T5.2. `Ask:` —

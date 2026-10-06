@@ -9,3 +9,14 @@ export const CreateIssueSchema = z.object({
   listType: z.enum(['SHORT', 'LONG']),
 });
 export type CreateIssueInputDTO = z.infer<typeof CreateIssueSchema>;
+
+export const ReorderIssuesSchema = z.object({
+  teamId: z.string().min(1),
+  listType: z.enum(['SHORT', 'LONG']),
+  orderedIds: z.array(z.string().min(1)).min(1),
+});
+
+export const MoveIssueSchema = z.object({
+  issueId: z.string().min(1),
+  toListType: z.enum(['SHORT', 'LONG']),
+});

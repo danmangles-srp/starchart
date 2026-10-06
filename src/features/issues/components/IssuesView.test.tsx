@@ -10,9 +10,15 @@ type Result = { ok: boolean; error?: string; message?: string; data?: unknown };
 const h = vi.hoisted(() => ({
   refresh: vi.fn(),
   createIssueAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { id: 'x' } })),
+  reorderIssuesAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
+  moveIssueAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: h.refresh, push: vi.fn() }) }));
-vi.mock('../server/actions', () => ({ createIssueAction: h.createIssueAction }));
+vi.mock('../server/actions', () => ({
+  createIssueAction: h.createIssueAction,
+  reorderIssuesAction: h.reorderIssuesAction,
+  moveIssueAction: h.moveIssueAction,
+}));
 
 const members = [{ userId: 'u1', name: 'Alice' }];
 
@@ -53,6 +59,8 @@ describe('IssuesView', () => {
     seq = 0;
     h.refresh.mockReset();
     h.createIssueAction.mockReset().mockResolvedValue({ ok: true, data: { id: 'x' } });
+    h.reorderIssuesAction.mockReset().mockResolvedValue({ ok: true, data: {} });
+    h.moveIssueAction.mockReset().mockResolvedValue({ ok: true, data: {} });
   });
 
   it('shows the empty state when there are no open issues', () => {
@@ -107,5 +115,16 @@ describe('IssuesView', () => {
   it('hides add controls when the viewer cannot edit', () => {
     renderView([issue('Slow site', 'SHORT')], false);
     expect(screen.queryByRole('button', { name: /^add$/i })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^reorder /i)).not.toBeInTheDocument();
+  });
+
+  it('moves an issue to the other list', async () => {
+    const user = userEvent.setup();
+    renderView([issue('Slow site', 'SHORT')]);
+    await user.click(screen.getByLabelText(/move to long-term: slow site/i));
+    await waitFor(() =>
+      expect(h.moveIssueAction).toHaveBeenCalledWith({ issueId: 'i1', toListType: 'LONG' }),
+    );
+    expect(h.refresh).toHaveBeenCalled();
   });
 });

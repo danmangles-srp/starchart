@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
+import { NotFoundError } from '@/lib/auth/errors';
 import type { IssueCounts, IssueListType, IssueRow } from '../domain/issue';
 
 type UserRef = { name: string | null; email: string };
@@ -131,6 +132,46 @@ export async function teamIssueSummary(
     else counts.longOpen += 1;
   }
   return counts;
+}
+
+/** Persist a new order for the open issues of one (team, list). orgId-scoped, transactional. */
+export async function reorderIssues(
+  orgId: string,
+  teamId: string,
+  listType: IssueListType,
+  orderedIds: string[],
+  prisma: PrismaClient = db,
+): Promise<void> {
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.issue.updateMany({
+        where: { id, orgId, teamId, listType },
+        data: { rank: index + 1 },
+      }),
+    ),
+  );
+}
+
+/** Move an issue to the other list, appending it to the end of the target list. Returns teamId. */
+export async function moveIssue(
+  orgId: string,
+  issueId: string,
+  toListType: IssueListType,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.issue.findFirst({
+    where: { id: issueId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Issue not found.');
+  const count = await prisma.issue.count({
+    where: { orgId, teamId: existing.teamId, listType: toListType },
+  });
+  await prisma.issue.update({
+    where: { id: issueId },
+    data: { listType: toListType, rank: count + 1 },
+  });
+  return existing.teamId;
 }
 
 /** The team an issue belongs to, or null if not in this org (authz for issue writes). */

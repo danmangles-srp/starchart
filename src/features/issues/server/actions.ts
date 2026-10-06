@@ -5,8 +5,8 @@ import { authorizedAction } from '@/lib/auth/authorizedAction';
 import { canEditTeam } from '@/lib/auth/permissions';
 import { AppError } from '@/lib/auth/errors';
 import { listTeamMembers } from '@/features/org/data/teams';
-import { createIssue } from '../data/issuesRepo';
-import { CreateIssueSchema } from '../domain/schemas';
+import { createIssue, getIssueTeamId, moveIssue, reorderIssues } from '../data/issuesRepo';
+import { CreateIssueSchema, MoveIssueSchema, ReorderIssuesSchema } from '../domain/schemas';
 
 async function assertOwnerOnTeam(orgId: string, teamId: string, ownerId: string): Promise<void> {
   const members = await listTeamMembers(orgId, teamId);
@@ -31,5 +31,30 @@ export const createIssueAction = authorizedAction({
     });
     revalidatePath(`/t/${input.teamId}/issues`);
     return { id: created.id };
+  },
+});
+
+/** Persist a dnd reorder within a team's list (member or Admin). */
+export const reorderIssuesAction = authorizedAction({
+  schema: ReorderIssuesSchema,
+  authorize: (viewer, input) => canEditTeam(viewer, input.teamId),
+  handler: async ({ viewer, input }) => {
+    await reorderIssues(viewer.orgId, input.teamId, input.listType, input.orderedIds);
+    revalidatePath(`/t/${input.teamId}/issues`);
+    return { ok: true as const };
+  },
+});
+
+/** Move an issue between the short-term and long-term lists (member or Admin). */
+export const moveIssueAction = authorizedAction({
+  schema: MoveIssueSchema,
+  authorize: async (viewer, input) => {
+    const teamId = await getIssueTeamId(viewer.orgId, input.issueId);
+    return teamId !== null && canEditTeam(viewer, teamId);
+  },
+  handler: async ({ viewer, input }) => {
+    const teamId = await moveIssue(viewer.orgId, input.issueId, input.toListType);
+    revalidatePath(`/t/${teamId}/issues`);
+    return { ok: true as const };
   },
 });
