@@ -441,7 +441,7 @@ FR-7.
 - **COMPLETE · T7.1 — Global search.**
   `Build:` cross-module search over **readable teams only**, grouped results with deep links. `Gate:`
   search-query unit tests + component test. `ACs:` FR-8.1. `Inv:` INV-2, INV-8. `Deps:` M2–M5. `Ask:` —
-- **T7.2— Accessibility pass.**
+- **COMPLETE · T7.2 — Accessibility pass.**
   `Build:` sweep every screen for keyboard operability, focus states, contrast (both themes),
   screen-reader labels/roles, 200% zoom, chart text-alternatives; fix gaps. `Gate:` a11y assertions in
   component tests; documented manual SR/zoom checks. `ACs:` NFR-3.\*. `Inv:` INV-6, INV-7. `Deps:` M6.

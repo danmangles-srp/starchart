@@ -69,6 +69,14 @@ describe('AppShell', () => {
     expect(screen.getByText(/Q[1-4] \d{4} · W\d{1,2}/)).toBeInTheDocument();
   });
 
+  it('exposes a skip link to the main landmark (WCAG 2.4.1)', () => {
+    renderShell();
+    const skip = screen.getByRole('link', { name: /skip to main content/i });
+    expect(skip).toHaveAttribute('href', '#main-content');
+    const main = screen.getByRole('main');
+    expect(main).toHaveAttribute('id', 'main-content');
+  });
+
   it('submits the search box to /search', async () => {
     renderShell();
     const input = screen.getByRole('searchbox', { name: /search/i });
