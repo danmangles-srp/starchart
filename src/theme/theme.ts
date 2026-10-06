@@ -32,6 +32,18 @@ const theme = createTheme({
   typography: {
     fontFamily: 'var(--font-geist-sans), system-ui, "Segoe UI", Roboto, Arial, sans-serif',
   },
+  components: {
+    // Visible keyboard focus everywhere (NFR-3 / WCAG 2.4.7). Mouse clicks keep
+    // their default (no ring) via :focus-visible; keyboard focus always shows one.
+    MuiCssBaseline: {
+      styleOverrides: {
+        ':focus-visible': {
+          outline: '2px solid var(--mui-palette-primary-main)',
+          outlineOffset: '2px',
+        },
+      },
+    },
+  },
 });
 
 export default theme;

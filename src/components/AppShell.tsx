@@ -195,6 +195,28 @@ export default function AppShell({
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100dvh' }}>
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: 'absolute',
+          left: 8,
+          top: -40,
+          zIndex: (theme) => theme.zIndex.drawer + 2,
+          px: 2,
+          py: 1,
+          borderRadius: 1,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          color: 'primary.main',
+          textDecoration: 'none',
+          transition: 'top 0.1s',
+          '&:focus-visible': { top: 8 },
+        }}
+      >
+        Skip to main content
+      </Box>
       <AppBar
         position="fixed"
         color="default"
@@ -267,7 +289,7 @@ export default function AppShell({
         </Drawer>
       </Box>
 
-      <Box component="main" sx={{ flexGrow: 1, minWidth: 0, p: 3 }}>
+      <Box id="main-content" component="main" tabIndex={-1} sx={{ flexGrow: 1, minWidth: 0, p: 3 }}>
         <Toolbar />
         {children}
       </Box>
