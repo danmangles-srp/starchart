@@ -51,6 +51,7 @@ const data: MyWeekData = {
     {
       id: 'm1',
       name: 'M',
+      teamId: 'mk1',
       ownerId: 'u1',
       ownerName: 'A',
       goalValue: 1,

@@ -17,6 +17,7 @@ const WINDOW_WEEKS = 13;
 type MeasurableWithOwner = {
   id: string;
   name: string;
+  teamId: string;
   ownerId: string;
   owner: { name: string | null; email: string };
   goalValue: number;
@@ -31,6 +32,7 @@ function toRow(m: MeasurableWithOwner): MeasurableRow {
   return {
     id: m.id,
     name: m.name,
+    teamId: m.teamId,
     ownerId: m.ownerId,
     ownerName: m.owner.name ?? m.owner.email,
     goalValue: m.goalValue,

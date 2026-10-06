@@ -4,6 +4,7 @@ export type MeasurableFormat = 'NUMBER' | 'PERCENT' | 'CURRENCY' | 'TIME';
 export interface MeasurableRow {
   id: string;
   name: string;
+  teamId: string;
   ownerId: string;
   ownerName: string;
   goalValue: number;

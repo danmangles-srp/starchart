@@ -46,6 +46,7 @@ const todo: TodoRow = {
 const measurable: MeasurableStatusRow = {
   id: 'm1',
   name: 'Leads',
+  teamId: 'mk1',
   ownerId: 'u1',
   ownerName: 'A',
   goalValue: 50,
@@ -123,6 +124,11 @@ describe('MyWeekView', () => {
         name: 'My Todos',
       }),
     ).toHaveAttribute('href', '/me/todos');
+    expect(
+      within(screen.getByRole('region', { name: 'Off-goal measurables' })).getByRole('link', {
+        name: 'Leads',
+      }),
+    ).toHaveAttribute('href', '/t/mk1/scorecard');
   });
 
   it('shows per-panel empty text for an empty panel while others have items', () => {

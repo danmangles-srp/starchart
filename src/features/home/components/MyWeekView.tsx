@@ -183,9 +183,15 @@ export default function MyWeekView({ data }: { data: MyWeekData }) {
               alignItems="center"
               gap={1}
             >
-              <Typography variant="body2" noWrap>
+              <Link
+                component={NextLink}
+                href={`/t/${m.teamId}/scorecard`}
+                variant="body2"
+                underline="hover"
+                noWrap
+              >
                 {m.name}
-              </Typography>
+              </Link>
               <Chip size="small" color="error" variant="outlined" label="off goal" />
             </Stack>
           ))}
