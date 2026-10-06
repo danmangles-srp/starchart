@@ -70,6 +70,7 @@ export async function listTeamTodos(
   const rows = await prisma.todo.findMany({
     where: { orgId, teamId },
     include: ownerInclude,
+    orderBy: { dueDate: 'asc' }, // deterministic truncation at the cap; re-partitioned below
     take: MAX_TEAM_LIST,
   });
   const mapped = rows.map((r) => toRow(r as unknown as TodoWithOwner));
