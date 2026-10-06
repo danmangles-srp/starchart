@@ -25,6 +25,8 @@ import AddIcon from '@mui/icons-material/Add';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ReplayIcon from '@mui/icons-material/Replay';
 import {
   DndContext,
   closestCenter,
@@ -44,7 +46,13 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import EmptyState from '@/components/states/EmptyState';
 import type { IssueListType, IssueRow } from '../domain/issue';
-import { createIssueAction, moveIssueAction, reorderIssuesAction } from '../server/actions';
+import {
+  createIssueAction,
+  moveIssueAction,
+  reopenIssueAction,
+  reorderIssuesAction,
+  solveIssueAction,
+} from '../server/actions';
 
 const TOP_N = 3; // the top 3 short-term issues are emphasized (FR-5.3)
 
@@ -85,6 +93,16 @@ export default function IssuesView({
 
   const short = useMemo(() => openInList(items, 'SHORT'), [items]);
   const long = useMemo(() => openInList(items, 'LONG'), [items]);
+  const solved = useMemo(
+    () =>
+      items
+        .filter((i) => i.solved)
+        .sort((a, b) => (b.solvedAt ?? '').localeCompare(a.solvedAt ?? '')),
+    [items],
+  );
+
+  const [solveFor, setSolveFor] = useState<IssueRow | null>(null);
+  const [note, setNote] = useState('');
 
   const {
     register,
@@ -154,7 +172,49 @@ export default function IssuesView({
     })();
   }
 
-  const empty = short.length === 0 && long.length === 0;
+  function solve(issue: IssueRow, resolutionNote: string | null) {
+    const previous = items;
+    const nowIso = new Date().toISOString();
+    setItems((cur) =>
+      cur.map((i) =>
+        i.id === issue.id ? { ...i, solved: true, solvedAt: nowIso, resolutionNote } : i,
+      ),
+    );
+    setSolveFor(null);
+    setError(null);
+    void (async () => {
+      const res = await solveIssueAction({ issueId: issue.id, resolutionNote });
+      if (!res.ok) {
+        setItems(previous);
+        setError(res.message ?? 'Could not solve the issue.');
+        return;
+      }
+      router.refresh();
+    })();
+  }
+
+  function reopen(issue: IssueRow) {
+    const previous = items;
+    setItems((cur) =>
+      cur.map((i) =>
+        i.id === issue.id
+          ? { ...i, solved: false, solvedAt: null, solvedById: null, resolutionNote: null }
+          : i,
+      ),
+    );
+    setError(null);
+    void (async () => {
+      const res = await reopenIssueAction({ issueId: issue.id });
+      if (!res.ok) {
+        setItems(previous);
+        setError(res.message ?? 'Could not reopen the issue.');
+        return;
+      }
+      router.refresh();
+    })();
+  }
+
+  const empty = short.length === 0 && long.length === 0 && solved.length === 0;
 
   return (
     <Box>
@@ -195,6 +255,10 @@ export default function IssuesView({
             onAdd={() => openAdd('SHORT')}
             onReorder={reorder}
             onMove={move}
+            onSolve={(i) => {
+              setNote('');
+              setSolveFor(i);
+            }}
           />
           <IssueList
             heading="Long-term"
@@ -205,9 +269,45 @@ export default function IssuesView({
             onAdd={() => openAdd('LONG')}
             onReorder={reorder}
             onMove={move}
+            onSolve={(i) => {
+              setNote('');
+              setSolveFor(i);
+            }}
           />
         </Box>
       )}
+
+      {solved.length > 0 ? (
+        <Box component="section" aria-label="Solved" sx={{ mt: 4 }}>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+            Solved ({solved.length})
+          </Typography>
+          <Stack gap={1}>
+            {solved.map((issue) => (
+              <Paper key={issue.id} variant="outlined" sx={{ p: 1.5, bgcolor: 'action.hover' }}>
+                <Stack direction="row" alignItems="flex-start" gap={1}>
+                  <CheckCircleIcon fontSize="small" color="success" sx={{ mt: 0.25 }} />
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" fontWeight={600}>
+                      {issue.title}
+                    </Typography>
+                    {issue.resolutionNote ? (
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        {issue.resolutionNote}
+                      </Typography>
+                    ) : null}
+                  </Box>
+                  {canEdit ? (
+                    <Button size="small" startIcon={<ReplayIcon />} onClick={() => reopen(issue)}>
+                      Reopen
+                    </Button>
+                  ) : null}
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        </Box>
+      ) : null}
 
       <Dialog open={dialogFor !== null} onClose={() => setDialogFor(null)} fullWidth maxWidth="sm">
         <DialogTitle>Raise a {dialogFor === 'LONG' ? 'long-term' : 'short-term'} issue</DialogTitle>
@@ -267,6 +367,35 @@ export default function IssuesView({
         </Box>
       </Dialog>
 
+      <Dialog open={solveFor !== null} onClose={() => setSolveFor(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Solve issue</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            {solveFor?.title}
+          </Typography>
+          <TextField
+            label="Resolution note (optional)"
+            size="small"
+            fullWidth
+            multiline
+            minRows={2}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSolveFor(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => {
+              if (solveFor) solve(solveFor, note.trim() ? note.trim() : null);
+            }}
+          >
+            Mark solved
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <Snackbar
         open={error !== null}
         autoHideDuration={6000}
@@ -291,6 +420,7 @@ function IssueList({
   onAdd,
   onReorder,
   onMove,
+  onSolve,
 }: {
   heading: string;
   hint: string;
@@ -301,6 +431,7 @@ function IssueList({
   onAdd: () => void;
   onReorder: (listType: IssueListType, orderedIds: string[]) => void;
   onMove: (issue: IssueRow, to: IssueListType) => void;
+  onSolve: (issue: IssueRow) => void;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -355,6 +486,7 @@ function IssueList({
                   canEdit={canEdit}
                   moveTo={other}
                   onMove={onMove}
+                  onSolve={onSolve}
                 />
               ))}
             </Stack>
@@ -372,6 +504,7 @@ function SortableIssueCard({
   canEdit,
   moveTo,
   onMove,
+  onSolve,
 }: {
   issue: IssueRow;
   emphasized: boolean;
@@ -379,6 +512,7 @@ function SortableIssueCard({
   canEdit: boolean;
   moveTo: IssueListType;
   onMove: (issue: IssueRow, to: IssueListType) => void;
+  onSolve: (issue: IssueRow) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: issue.id,
@@ -422,19 +556,30 @@ function SortableIssueCard({
           ) : null}
         </Box>
         {canEdit ? (
-          <Tooltip title={moveLabel}>
-            <IconButton
-              size="small"
-              aria-label={`${moveLabel}: ${issue.title}`}
-              onClick={() => onMove(issue, moveTo)}
-            >
-              {moveTo === 'LONG' ? (
-                <ArrowForwardIcon fontSize="small" />
-              ) : (
-                <ArrowBackIcon fontSize="small" />
-              )}
-            </IconButton>
-          </Tooltip>
+          <>
+            <Tooltip title="Solve">
+              <IconButton
+                size="small"
+                aria-label={`Solve ${issue.title}`}
+                onClick={() => onSolve(issue)}
+              >
+                <CheckCircleIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={moveLabel}>
+              <IconButton
+                size="small"
+                aria-label={`${moveLabel}: ${issue.title}`}
+                onClick={() => onMove(issue, moveTo)}
+              >
+                {moveTo === 'LONG' ? (
+                  <ArrowForwardIcon fontSize="small" />
+                ) : (
+                  <ArrowBackIcon fontSize="small" />
+                )}
+              </IconButton>
+            </Tooltip>
+          </>
         ) : null}
       </Stack>
     </Paper>
