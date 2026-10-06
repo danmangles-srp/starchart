@@ -6,8 +6,13 @@ import { authorizedAction } from '@/lib/auth/authorizedAction';
 import { canEditTeam } from '@/lib/auth/permissions';
 import { AppError, NotFoundError } from '@/lib/auth/errors';
 import { listTeamMembers } from '@/features/org/data/teams';
-import { createTodo, deleteTodo, getTodoTeamId, updateTodo } from '../data/todosRepo';
-import { CreateTodoSchema, DeleteTodoSchema, UpdateTodoSchema } from '../domain/schemas';
+import { createTodo, deleteTodo, getTodoTeamId, setTodoDone, updateTodo } from '../data/todosRepo';
+import {
+  CreateTodoSchema,
+  DeleteTodoSchema,
+  SetTodoDoneSchema,
+  UpdateTodoSchema,
+} from '../domain/schemas';
 
 /** Parse a YYYY-MM-DD date as midnight UTC. */
 function parseDate(value: string): Date {
@@ -62,6 +67,20 @@ export const updateTodoAction = authorizedAction({
     });
     revalidatePath(`/t/${teamId}/todos`);
     return { id: input.todoId };
+  },
+});
+
+/** Mark a todo done/undone (any team member or Admin), stamping completedAt. */
+export const setTodoDoneAction = authorizedAction({
+  schema: SetTodoDoneSchema,
+  authorize: async (viewer, input) => {
+    const teamId = await getTodoTeamId(viewer.orgId, input.todoId);
+    return teamId !== null && canEditTeam(viewer, teamId);
+  },
+  handler: async ({ viewer, input }) => {
+    const teamId = await setTodoDone(viewer.orgId, input.todoId, input.done, new Date());
+    revalidatePath(`/t/${teamId}/todos`);
+    return { id: input.todoId, done: input.done };
   },
 });
 

@@ -20,6 +20,23 @@ export function isOverdue(dueDate: Date, done: boolean, now: Date): boolean {
   return !done && dueDate.getTime() < now.getTime();
 }
 
+/** Whole days a todo is past due (0 when not yet due). Pure. */
+export function daysOverdue(dueDate: Date, now: Date): number {
+  const ms = now.getTime() - dueDate.getTime();
+  return ms <= 0 ? 0 : Math.floor(ms / 86_400_000);
+}
+
+/**
+ * A human age cue for a carried-over (overdue) item, or null when not overdue.
+ * "Due today" when past due by less than a day; otherwise "N day(s) overdue".
+ */
+export function overdueLabel(dueDate: Date, done: boolean, now: Date): string | null {
+  if (!isOverdue(dueDate, done, now)) return null;
+  const days = daysOverdue(dueDate, now);
+  if (days === 0) return 'Due today';
+  return days === 1 ? '1 day overdue' : `${days} days overdue`;
+}
+
 export interface TodoCounts {
   total: number;
   open: number;

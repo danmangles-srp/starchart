@@ -12,12 +12,14 @@ const h = vi.hoisted(() => ({
   createTodoAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { id: 'x' } })),
   updateTodoAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { id: 'x' } })),
   deleteTodoAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
+  setTodoDoneAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: h.refresh, push: vi.fn() }) }));
 vi.mock('../server/actions', () => ({
   createTodoAction: h.createTodoAction,
   updateTodoAction: h.updateTodoAction,
   deleteTodoAction: h.deleteTodoAction,
+  setTodoDoneAction: h.setTodoDoneAction,
 }));
 
 const members = [{ userId: 'u1', name: 'Alice' }];
@@ -52,6 +54,7 @@ describe('TodosView', () => {
     h.createTodoAction.mockReset().mockResolvedValue({ ok: true, data: { id: 'x' } });
     h.updateTodoAction.mockReset().mockResolvedValue({ ok: true, data: { id: 'x' } });
     h.deleteTodoAction.mockReset().mockResolvedValue({ ok: true, data: {} });
+    h.setTodoDoneAction.mockReset().mockResolvedValue({ ok: true, data: {} });
   });
 
   it('shows the empty state when there are no todos', () => {
@@ -105,5 +108,36 @@ describe('TodosView', () => {
     renderView([todo()], false);
     expect(screen.queryByRole('button', { name: /add todo/i })).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/edit call supplier/i)).not.toBeInTheDocument();
+    expect((screen.getByRole('checkbox') as HTMLInputElement).disabled).toBe(true);
+  });
+
+  it('completes a todo optimistically and refreshes', async () => {
+    const user = userEvent.setup();
+    renderView([todo()]);
+    await user.click(screen.getByRole('checkbox', { name: /mark call supplier done/i }));
+    await waitFor(() =>
+      expect(h.setTodoDoneAction).toHaveBeenCalledWith({ todoId: 't1', done: true }),
+    );
+    await waitFor(() => expect(h.refresh).toHaveBeenCalled());
+  });
+
+  it('rolls back the checkbox when completing fails', async () => {
+    h.setTodoDoneAction.mockResolvedValue({ ok: false, error: 'forbidden', message: 'Nope' });
+    const user = userEvent.setup();
+    renderView([todo()]);
+    await user.click(screen.getByRole('checkbox', { name: /mark call supplier done/i }));
+    expect(await screen.findByText('Nope')).toBeInTheDocument();
+    await waitFor(() => {
+      const box = screen.getByRole('checkbox', {
+        name: /mark call supplier done/i,
+      }) as HTMLInputElement;
+      expect(box.checked).toBe(false); // reverted
+    });
+    expect(h.refresh).not.toHaveBeenCalled();
+  });
+
+  it('flags an overdue open todo with an age cue (not color alone)', () => {
+    renderView([todo({ dueDate: '2000-01-01T00:00:00.000Z' })]);
+    expect(screen.getByText(/overdue/i)).toBeInTheDocument();
   });
 });

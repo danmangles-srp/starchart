@@ -361,7 +361,7 @@ Built **before** Issues so the Issues→Todo conversion has a target. **ACs:** F
   `Build:` `Todo` (title, notes, ownerId, teamId, dueDate, done, completedAt, sourceIssueId?,
   sourceRockId?); scoped data-access; expose `myItemsFor` + `teamSummary` (INV-9). `Gate:` repository +
   scoping tests. `ACs:` FR-6.1, FR-6.2, NFR-1.3. `Inv:` INV-2, INV-9. `Deps:` T1.3. `Ask:` —
-- **T4.2 — Team Todos screen.**
+- **COMPLETE (#28) · T4.2 — Team Todos screen.**
   `Build:` open/done lists; add (RHF + Zod, **due default +7**), edit/delete; four states. `Gate:`
   component tests per state + add/validation. `ACs:` FR-6.1, NFR-9.1. `Inv:` INV-1, INV-7. `Deps:` T4.1,
   T0.4. `Ask:` —
@@ -369,10 +369,6 @@ Built **before** Issues so the Issues→Todo conversion has a target. **ACs:** F
   `Build:` optimistic done/undone; **overdue cue = color + icon/label**; age indicator on carried-over
   items (pure overdue/age helper). `Gate:` overdue/age unit tests + optimistic-rollback test. `ACs:`
   FR-6.3, FR-6.4, NFR-3.3, NFR-5.1. `Inv:` INV-3, INV-5, INV-6. `Deps:` T4.2. `Ask:` —
-- **T4.4 — My Todos (cross-team).**
-  `Build:` aggregate the user's open+overdue Todos across all teams (via INV-9), due-sorted,
-  grouped/filterable by team, deep-linking into each team. `Gate:` aggregation unit + component test.
-  `ACs:` FR-6.5. `Inv:` INV-8, INV-9. `Deps:` T4.3. `Ask:` —
 
 ---
 

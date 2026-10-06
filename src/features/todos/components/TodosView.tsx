@@ -20,12 +20,20 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
+import Checkbox from '@mui/material/Checkbox';
+import Chip from '@mui/material/Chip';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import EmptyState from '@/components/states/EmptyState';
-import type { TodoRow } from '../domain/todo';
-import { createTodoAction, deleteTodoAction, updateTodoAction } from '../server/actions';
+import { overdueLabel, type TodoRow } from '../domain/todo';
+import {
+  createTodoAction,
+  deleteTodoAction,
+  setTodoDoneAction,
+  updateTodoAction,
+} from '../server/actions';
 
 const FormSchema = z.object({
   title: z.string().trim().min(1, 'Title is required').max(200),
@@ -59,8 +67,38 @@ export default function TodosView({
   const [editing, setEditing] = useState<TodoRow | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  const open = useMemo(() => todos.filter((t) => !t.done), [todos]);
-  const done = useMemo(() => todos.filter((t) => t.done), [todos]);
+  // Local copy for optimistic done-toggles (INV-5), re-seeded from the server
+  // after each refresh via a render-time resync (not an effect).
+  const [items, setItems] = useState(todos);
+  const [prevTodos, setPrevTodos] = useState(todos);
+  if (todos !== prevTodos) {
+    setPrevTodos(todos);
+    setItems(todos);
+  }
+
+  const open = useMemo(() => items.filter((t) => !t.done), [items]);
+  const done = useMemo(() => items.filter((t) => t.done), [items]);
+
+  function toggleDone(todo: TodoRow, next: boolean) {
+    setError(null);
+    const previous = items;
+    setItems((cur) =>
+      cur.map((t) =>
+        t.id === todo.id
+          ? { ...t, done: next, completedAt: next ? new Date().toISOString() : null }
+          : t,
+      ),
+    );
+    void (async () => {
+      const res = await setTodoDoneAction({ todoId: todo.id, done: next });
+      if (!res.ok) {
+        setItems(previous); // rollback
+        setError(res.message ?? 'Could not update the todo.');
+        return;
+      }
+      router.refresh();
+    })();
+  }
 
   const defaults = useMemo<FormValues>(
     () => ({
@@ -134,7 +172,7 @@ export default function TodosView({
         ) : null}
       </Stack>
 
-      {todos.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState
           title="No todos yet"
           description="7-day action items for this team will appear here."
@@ -152,6 +190,7 @@ export default function TodosView({
             heading={`Open (${open.length})`}
             todos={open}
             canEdit={canEdit}
+            onToggle={toggleDone}
             onEdit={openEdit}
             onDelete={setConfirmId}
             confirmId={confirmId}
@@ -163,6 +202,7 @@ export default function TodosView({
               heading={`Done (${done.length})`}
               todos={done}
               canEdit={canEdit}
+              onToggle={toggleDone}
               onEdit={openEdit}
               onDelete={setConfirmId}
               confirmId={confirmId}
@@ -256,6 +296,7 @@ function TodoSection({
   heading,
   todos,
   canEdit,
+  onToggle,
   onEdit,
   onDelete,
   confirmId,
@@ -265,70 +306,93 @@ function TodoSection({
   heading: string;
   todos: TodoRow[];
   canEdit: boolean;
+  onToggle: (t: TodoRow, next: boolean) => void;
   onEdit: (t: TodoRow) => void;
   onDelete: (id: string) => void;
   confirmId: string | null;
   onConfirmDelete: (id: string) => void;
   onCancelDelete: () => void;
 }) {
+  const now = new Date();
   return (
     <Box component="section" aria-label={heading}>
       <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
         {heading}
       </Typography>
       <Stack gap={1}>
-        {todos.map((t) => (
-          <Paper key={t.id} variant="outlined" sx={{ p: 1.5 }}>
-            <Stack direction="row" alignItems="flex-start" gap={1}>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="body2"
-                  fontWeight={600}
-                  sx={{ textDecoration: t.done ? 'line-through' : 'none' }}
-                >
-                  {t.title}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {t.ownerName} · due {dueLabel(t.dueDate)}
-                </Typography>
-                {t.notes ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {t.notes}
+        {todos.map((t) => {
+          const overdue = overdueLabel(parseISO(t.dueDate), t.done, now);
+          return (
+            <Paper key={t.id} variant="outlined" sx={{ p: 1.5 }}>
+              <Stack direction="row" alignItems="flex-start" gap={1}>
+                <Checkbox
+                  checked={t.done}
+                  disabled={!canEdit}
+                  onChange={(e) => onToggle(t, e.target.checked)}
+                  inputProps={{ 'aria-label': `Mark ${t.title} ${t.done ? 'not done' : 'done'}` }}
+                  sx={{ mt: -0.5 }}
+                />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight={600}
+                    sx={{ textDecoration: t.done ? 'line-through' : 'none' }}
+                  >
+                    {t.title}
                   </Typography>
+                  <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
+                    <Typography variant="caption" color="text.secondary">
+                      {t.ownerName} · due {dueLabel(t.dueDate)}
+                    </Typography>
+                    {overdue ? (
+                      <Chip
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                        icon={<WarningAmberIcon fontSize="small" />}
+                        label={overdue}
+                      />
+                    ) : null}
+                  </Stack>
+                  {t.notes ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {t.notes}
+                    </Typography>
+                  ) : null}
+                </Box>
+                {canEdit ? (
+                  confirmId === t.id ? (
+                    <Stack direction="row" gap={0.5}>
+                      <Button size="small" color="error" onClick={() => onConfirmDelete(t.id)}>
+                        Delete
+                      </Button>
+                      <Button size="small" onClick={onCancelDelete}>
+                        Cancel
+                      </Button>
+                    </Stack>
+                  ) : (
+                    <Stack direction="row">
+                      <IconButton
+                        size="small"
+                        aria-label={`Edit ${t.title}`}
+                        onClick={() => onEdit(t)}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        aria-label={`Delete ${t.title}`}
+                        onClick={() => onDelete(t.id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  )
                 ) : null}
-              </Box>
-              {canEdit ? (
-                confirmId === t.id ? (
-                  <Stack direction="row" gap={0.5}>
-                    <Button size="small" color="error" onClick={() => onConfirmDelete(t.id)}>
-                      Delete
-                    </Button>
-                    <Button size="small" onClick={onCancelDelete}>
-                      Cancel
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Stack direction="row">
-                    <IconButton
-                      size="small"
-                      aria-label={`Edit ${t.title}`}
-                      onClick={() => onEdit(t)}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      aria-label={`Delete ${t.title}`}
-                      onClick={() => onDelete(t.id)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Stack>
-                )
-              ) : null}
-            </Stack>
-          </Paper>
-        ))}
+              </Stack>
+            </Paper>
+          );
+        })}
       </Stack>
     </Box>
   );
