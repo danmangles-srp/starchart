@@ -51,7 +51,9 @@ function TimeAnchorChip() {
         size="small"
         variant="outlined"
         icon={<CalendarTodayIcon fontSize="small" />}
-        label={`${a.quarterLabel} · ${a.isoWeekLabel}`}
+        // suppressHydrationWarning: at a quarter/week boundary the server and client
+        // clocks can label differently; ignore that one-render diff rather than block render.
+        label={<span suppressHydrationWarning>{`${a.quarterLabel} · ${a.isoWeekLabel}`}</span>}
         aria-label={`Today: ${a.quarterLabel}, week ${a.isoWeek}`}
         sx={{ display: { xs: 'none', sm: 'flex' } }}
       />
