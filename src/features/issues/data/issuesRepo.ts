@@ -164,6 +164,9 @@ export async function moveIssue(
     select: { teamId: true },
   });
   if (!existing) throw new NotFoundError('Issue not found.');
+  // Count ALL issues in the target list (incl. solved), same as createIssue, so the
+  // new rank never collides with one a solved issue still holds. It still sorts last
+  // among open issues; the client's optimistic rank is reconciled on refresh.
   const count = await prisma.issue.count({
     where: { orgId, teamId: existing.teamId, listType: toListType },
   });
