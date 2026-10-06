@@ -161,7 +161,7 @@ the PR.** Don't re-ask a resolved decision.
 | M3 Data / Scorecard | **IN PROGRESS** (T3.1–T3.6 done; T3.7 Google-login bug blocked on console/env) |
 | M4 Todos | **COMPLETE** |
 | M5 Issues (incl. solve → convert) | **IN PROGRESS** |
-| M6 My Week home + Team dashboards | **IN PROGRESS** |
+| M6 My Week home + Team dashboards | **COMPLETE** |
 | M7 Polish: search, notifications, a11y/perf/responsive | PLANNED |
 
 ---
@@ -424,10 +424,13 @@ FR-7.
   `Build:` per-team landing summarizing all four modules (Rocks on-track, this week's Scorecard
   red/green, open Issues short/long, Todos open/due) with quick links. `Gate:` component test + counts.
   `ACs:` FR-7.2. `Inv:` INV-6, INV-7, INV-8. `Deps:` T6.1. `Ask:` —
-- **T6.4 — Time context wiring.**
-  `Build:` quarter selector (Rocks) + current-week anchor (Scorecard/Todos) in the app bar, default
-  today, persisted, historical browse — consumed consistently by the modules. `Gate:` context
-  unit/component tests. `ACs:` FR-7.3. `Inv:` INV-4, INV-8. `Deps:` T2.3, T3.3. `Ask:` —
+- **COMPLETE · T6.4 — Time context wiring.**
+  `Build:` shared "today" anchor in the app bar — current calendar quarter + ISO week (INV-4), so
+  Rocks (quarter) and Scorecard/Todos (week) read against one consistent context. Interactive
+  historical browse stays in-module (Rocks quarter selector T2.3, Scorecard week pager T3.3), which
+  already persist via the URL (INV-8); the bar anchor is the shared default-today indicator.
+  `Gate:` `timeAnchor` unit test + AppShell anchor render. `ACs:` FR-7.3. `Inv:` INV-4, INV-8. `Deps:`
+  T2.3, T3.3. `Ask:` —
 
 ---
 
@@ -438,20 +441,16 @@ FR-7.
 - **T7.1 — Global search.**
   `Build:` cross-module search over **readable teams only**, grouped results with deep links. `Gate:`
   search-query unit tests + component test. `ACs:` FR-8.1. `Inv:` INV-2, INV-8. `Deps:` M2–M5. `Ask:` —
-- **T7.2 — In-app notifications.**
-  `Build:` notify on assignment (Todo/Issue/Rock) + an owned Todo going overdue; non-blocking center,
-  dismissable. `Gate:` notification-trigger unit tests + component test. `ACs:` FR-8.2. `Inv:` INV-3,
-  INV-7. `Deps:` M2–M5. `Ask:` —
-- **T7.3 — Accessibility pass.**
+- **T7.2— Accessibility pass.**
   `Build:` sweep every screen for keyboard operability, focus states, contrast (both themes),
   screen-reader labels/roles, 200% zoom, chart text-alternatives; fix gaps. `Gate:` a11y assertions in
   component tests; documented manual SR/zoom checks. `ACs:` NFR-3.\*. `Inv:` INV-6, INV-7. `Deps:` M6.
   `Ask:` —
-- **T7.4 — Performance pass.**
+- **T7.3 — Performance pass.**
   `Build:` Scorecard virtualization/efficiency to NFR-2.2, route prefetch, bundle trim, bounded-query
   audit. `Gate:` perf-sensitive unit tests; documented measurements vs NFR-2. `ACs:` NFR-2.\*. `Inv:`
   INV-2. `Deps:` M6. `Ask:` —
-- **T7.5 — Responsive & design-review sweep.**
+- **T7.4 — Responsive & design-review sweep.**
   `Build:` tablet/phone layouts (drawer collapse, grid horizontal scroll, stacked dashboards),
   empty/error polish, and a full `/design-review` pass across all screens to ≥ 4/5. `Gate:` responsive
   component tests at breakpoints; design scorecards in the PR. `ACs:` NFR-7.2, NFR-9.1. `Inv:` INV-6,

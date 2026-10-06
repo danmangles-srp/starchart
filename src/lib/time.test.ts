@@ -7,6 +7,7 @@ import {
   isoWeekKey,
   isoWeekEquals,
   trailingIsoWeeks,
+  timeAnchor,
 } from './time';
 
 describe('clock', () => {
@@ -78,5 +79,15 @@ describe('ISO weeks', () => {
     const full = trailingIsoWeeks(asOf, 26);
     const priorPage = trailingIsoWeeks(asOf, 13, 13);
     expect(priorPage[0]).toEqual(full[13]); // the page before the trailing 13
+  });
+});
+
+describe('timeAnchor', () => {
+  it('labels the calendar quarter and ISO week of a date', () => {
+    const a = timeAnchor(new Date('2026-05-10T00:00:00Z'));
+    expect(a.quarterLabel).toBe('Q2 2026');
+    expect(a.isoWeekLabel).toBe(`W${a.isoWeek}`);
+    expect(a.fiscalYear).toBe(2026);
+    expect(a.quarterIndex).toBe(2);
   });
 });

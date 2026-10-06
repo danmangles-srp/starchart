@@ -82,3 +82,26 @@ export function calendarQuarterKey(date: Date): QuarterKey {
     quarterIndex: Math.floor(date.getUTCMonth() / 3) + 1,
   };
 }
+
+/** The shared "today" context shown in the app bar (FR-7.3): calendar quarter + ISO week. */
+export interface TimeAnchor {
+  fiscalYear: number;
+  quarterIndex: number;
+  quarterLabel: string;
+  isoYear: number;
+  isoWeek: number;
+  isoWeekLabel: string;
+}
+
+export function timeAnchor(now: Date): TimeAnchor {
+  const q = calendarQuarterKey(now);
+  const w = isoWeekKey(now);
+  return {
+    fiscalYear: q.fiscalYear,
+    quarterIndex: q.quarterIndex,
+    quarterLabel: `Q${q.quarterIndex} ${q.fiscalYear}`,
+    isoYear: w.isoYear,
+    isoWeek: w.isoWeek,
+    isoWeekLabel: `W${w.isoWeek}`,
+  };
+}
