@@ -16,10 +16,15 @@ import {
   type TeamSummaries,
 } from '../domain/home';
 
+/** The viewer's current quarter, resolved from the org's definitions. */
+async function currentQuarter(viewer: Viewer, now: Date) {
+  const defs = await listQuarterDefinitions(viewer.orgId);
+  return resolveCurrentQuarter(defs, now);
+}
+
 /** Assemble the viewer's personal "My Week" from the four INV-9 myItemsFor contracts. */
 export async function loadMyWeek(viewer: Viewer, now: Date = new Date()): Promise<MyWeekData> {
-  const defs = await listQuarterDefinitions(viewer.orgId);
-  const quarter = resolveCurrentQuarter(defs, now);
+  const quarter = await currentQuarter(viewer, now);
   const [rocks, todos, measurables, issues] = await Promise.all([
     myRocksFor(viewer.orgId, viewer.id, quarter),
     myOpenTodosFor(viewer.orgId, viewer.id),
@@ -34,8 +39,7 @@ export async function loadTeamDashboards(
   viewer: Viewer,
   now: Date = new Date(),
 ): Promise<TeamDashboardData[]> {
-  const defs = await listQuarterDefinitions(viewer.orgId);
-  const quarter = resolveCurrentQuarter(defs, now);
+  const quarter = await currentQuarter(viewer, now);
   const teams = await listReadableTeams(viewer);
 
   const entries = await Promise.all(
