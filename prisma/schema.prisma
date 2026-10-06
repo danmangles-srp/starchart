@@ -34,6 +34,7 @@ model Organization {
   rocks              Rock[]
   measurables        Measurable[]
   todos              Todo[]
+  issues             Issue[]
 }
 
 model User {
@@ -58,6 +59,9 @@ model User {
   rocks        Rock[]
   measurables  Measurable[]
   todos        Todo[]
+  raisedIssues Issue[]       @relation("IssueRaiser")
+  ownedIssues  Issue[]       @relation("IssueOwner")
+  solvedIssues Issue[]       @relation("IssueSolver")
 
   @@index([orgId])
   @@index([homeTeamId])
@@ -140,6 +144,7 @@ model Team {
   rocks        Rock[]
   measurables  Measurable[]
   todos        Todo[]
+  issues       Issue[]
 
   @@unique([orgId, name])
   @@index([orgId])
@@ -332,6 +337,46 @@ model WeeklyEntry {
 
   @@unique([measurableId, isoYear, isoWeek])
   @@index([measurableId])
+}
+
+// --- Issues (M5) ---
+
+enum IssueListType {
+  SHORT
+  LONG
+}
+
+/// An issue on a team's IDS list. solved* records the resolution; createdTodoId /
+/// createdRockId are soft links (ids, no FK) to an item it converted into (FR-5.5).
+model Issue {
+  id             String        @id @default(cuid())
+  orgId          String
+  teamId         String
+  title          String
+  description    String?
+  raiserId       String
+  ownerId        String?
+  listType       IssueListType @default(SHORT)
+  rank           Int           @default(0)
+  solved         Boolean       @default(false)
+  solvedAt       DateTime?
+  solvedById     String?
+  resolutionNote String?
+  createdTodoId  String?
+  createdRockId  String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  org     Organization @relation(fields: [orgId], references: [id])
+  team    Team         @relation(fields: [teamId], references: [id])
+  raiser  User         @relation("IssueRaiser", fields: [raiserId], references: [id])
+  owner   User?        @relation("IssueOwner", fields: [ownerId], references: [id])
+  solver  User?        @relation("IssueSolver", fields: [solvedById], references: [id])
+
+  @@index([orgId])
+  @@index([teamId])
+  @@index([ownerId])
+  @@index([teamId, listType, solved])
 }
 
 // --- Todos (M4) ---
