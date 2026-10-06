@@ -10,7 +10,7 @@ import { GOAL_STATUS_META } from './goalStatusMeta';
  * Empty is neutral (muted em dash), distinct from a real 0.
  */
 export default function GoalCell({ cell, week }: { cell: ScorecardCell; week: WeekColumn }) {
-  const meta = GOAL_STATUS_META[cell.status];
+  const meta = GOAL_STATUS_META[cell.status] ?? GOAL_STATUS_META.empty;
   const Icon = meta.icon;
   const isColored = meta.color !== 'default';
   // One tone for both the icon and the value, so empty cells read consistently.

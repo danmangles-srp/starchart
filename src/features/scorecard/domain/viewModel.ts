@@ -1,4 +1,5 @@
 import type { GoalStatus } from './scorecard';
+import type { Comparator, MeasurableFormat } from './measurable';
 
 /** One ISO-week column, newest-first (FR-4.2). */
 export interface WeekColumn {
@@ -27,6 +28,12 @@ export interface ScorecardRowVM {
   goalLabel: string;
   /** e.g. "9/11 on goal". */
   summary: string;
+  /** Goal definition, carried so the client can re-evaluate a cell after an inline edit. */
+  comparator: Comparator;
+  goalValue: number;
+  goalMax: number | null;
+  format: MeasurableFormat;
+  unit: string | null;
   /** Cell per week, keyed by WeekColumn.key. */
   cellsByWeek: Record<string, ScorecardCell>;
 }

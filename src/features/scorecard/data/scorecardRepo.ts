@@ -88,6 +88,19 @@ export async function createMeasurable(
   });
 }
 
+/** The team a measurable belongs to, or null if it isn't in this org (authz for entry writes). */
+export async function getMeasurableTeamId(
+  orgId: string,
+  measurableId: string,
+  prisma: PrismaClient = db,
+): Promise<string | null> {
+  const m = await prisma.measurable.findFirst({
+    where: { id: measurableId, orgId },
+    select: { teamId: true },
+  });
+  return m?.teamId ?? null;
+}
+
 /** Set/clear one week's value. null = empty (distinct from 0). orgId-scoped via the measurable. */
 export async function upsertWeeklyEntry(
   orgId: string,
