@@ -394,7 +394,7 @@ issue into a Todo or Rock with a two-way link. **ACs:** FR-5.
   `Build:` reorder within a list (dnd-kit) with persisted rank; move an issue between short-term and
   long-term. `Gate:` reorder-persist + move tests. `ACs:` FR-5.3, FR-5.1. `Inv:` INV-1, INV-5. `Deps:`
   T5.2. `Ask:` —
-- **T5.4 — Solve flow.**
+- **COMPLETE · T5.4 — Solve flow.**
   `Build:` mark solved (+ optional resolution note), record solver/solved-at (activity log), move to a
   solved/archived view (still readable); optimistic. `Gate:` solve + archive + rollback tests. `ACs:`
   FR-5.4, FR-2.6, NFR-5.1. `Inv:` INV-1, INV-5, INV-10. `Deps:` T5.2, T1.6. `Ask:` —

@@ -177,6 +177,45 @@ export async function moveIssue(
   return existing.teamId;
 }
 
+/** Mark an issue solved, recording solver + timestamp + optional note. Returns teamId. */
+export async function solveIssue(
+  orgId: string,
+  issueId: string,
+  solverId: string,
+  resolutionNote: string | null,
+  now: Date,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.issue.findFirst({
+    where: { id: issueId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Issue not found.');
+  await prisma.issue.update({
+    where: { id: issueId },
+    data: { solved: true, solvedAt: now, solvedById: solverId, resolutionNote },
+  });
+  return existing.teamId;
+}
+
+/** Reopen a solved issue, clearing its resolution. Returns teamId. */
+export async function reopenIssue(
+  orgId: string,
+  issueId: string,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.issue.findFirst({
+    where: { id: issueId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Issue not found.');
+  await prisma.issue.update({
+    where: { id: issueId },
+    data: { solved: false, solvedAt: null, solvedById: null, resolutionNote: null },
+  });
+  return existing.teamId;
+}
+
 /** The team an issue belongs to, or null if not in this org (authz for issue writes). */
 export async function getIssueTeamId(
   orgId: string,

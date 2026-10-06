@@ -20,3 +20,10 @@ export const MoveIssueSchema = z.object({
   issueId: z.string().min(1),
   toListType: z.enum(['SHORT', 'LONG']),
 });
+
+export const SolveIssueSchema = z.object({
+  issueId: z.string().min(1),
+  resolutionNote: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const ReopenIssueSchema = z.object({ issueId: z.string().min(1) });

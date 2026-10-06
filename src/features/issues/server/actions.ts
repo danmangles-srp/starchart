@@ -5,8 +5,23 @@ import { authorizedAction } from '@/lib/auth/authorizedAction';
 import { canEditTeam } from '@/lib/auth/permissions';
 import { AppError } from '@/lib/auth/errors';
 import { listTeamMembers } from '@/features/org/data/teams';
-import { createIssue, getIssueTeamId, moveIssue, reorderIssues } from '../data/issuesRepo';
-import { CreateIssueSchema, MoveIssueSchema, ReorderIssuesSchema } from '../domain/schemas';
+import { logActivity } from '@/features/activity/data/activityLog';
+import { ACTIVITY_ACTIONS } from '@/features/activity/domain/activity';
+import {
+  createIssue,
+  getIssueTeamId,
+  moveIssue,
+  reopenIssue,
+  reorderIssues,
+  solveIssue,
+} from '../data/issuesRepo';
+import {
+  CreateIssueSchema,
+  MoveIssueSchema,
+  ReopenIssueSchema,
+  ReorderIssuesSchema,
+  SolveIssueSchema,
+} from '../domain/schemas';
 
 async function assertOwnerOnTeam(orgId: string, teamId: string, ownerId: string): Promise<void> {
   const members = await listTeamMembers(orgId, teamId);
@@ -54,6 +69,50 @@ export const moveIssueAction = authorizedAction({
   },
   handler: async ({ viewer, input }) => {
     const teamId = await moveIssue(viewer.orgId, input.issueId, input.toListType);
+    revalidatePath(`/t/${teamId}/issues`);
+    return { ok: true as const };
+  },
+});
+
+/** Mark an issue solved (member or Admin); records solver + time and logs the activity. */
+export const solveIssueAction = authorizedAction({
+  schema: SolveIssueSchema,
+  authorize: async (viewer, input) => {
+    const teamId = await getIssueTeamId(viewer.orgId, input.issueId);
+    return teamId !== null && canEditTeam(viewer, teamId);
+  },
+  handler: async ({ viewer, input }) => {
+    const teamId = await solveIssue(
+      viewer.orgId,
+      input.issueId,
+      viewer.id,
+      input.resolutionNote ?? null,
+      new Date(),
+    );
+    revalidatePath(`/t/${teamId}/issues`);
+    return { teamId };
+  },
+  audit: async ({ viewer, input, result }) => {
+    await logActivity({
+      orgId: viewer.orgId,
+      actorId: viewer.id,
+      action: ACTIVITY_ACTIONS.ISSUE_SOLVED,
+      targetType: 'issue',
+      targetId: input.issueId,
+      teamId: result.teamId,
+    });
+  },
+});
+
+/** Reopen a solved issue (member or Admin). */
+export const reopenIssueAction = authorizedAction({
+  schema: ReopenIssueSchema,
+  authorize: async (viewer, input) => {
+    const teamId = await getIssueTeamId(viewer.orgId, input.issueId);
+    return teamId !== null && canEditTeam(viewer, teamId);
+  },
+  handler: async ({ viewer, input }) => {
+    const teamId = await reopenIssue(viewer.orgId, input.issueId);
     revalidatePath(`/t/${teamId}/issues`);
     return { ok: true as const };
   },

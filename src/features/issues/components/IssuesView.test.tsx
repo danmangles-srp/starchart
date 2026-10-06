@@ -12,12 +12,16 @@ const h = vi.hoisted(() => ({
   createIssueAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { id: 'x' } })),
   reorderIssuesAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
   moveIssueAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
+  solveIssueAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: { teamId: 'mk1' } })),
+  reopenIssueAction: vi.fn(async (): Promise<Result> => ({ ok: true, data: {} })),
 }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: h.refresh, push: vi.fn() }) }));
 vi.mock('../server/actions', () => ({
   createIssueAction: h.createIssueAction,
   reorderIssuesAction: h.reorderIssuesAction,
   moveIssueAction: h.moveIssueAction,
+  solveIssueAction: h.solveIssueAction,
+  reopenIssueAction: h.reopenIssueAction,
 }));
 
 const members = [{ userId: 'u1', name: 'Alice' }];
@@ -61,6 +65,8 @@ describe('IssuesView', () => {
     h.createIssueAction.mockReset().mockResolvedValue({ ok: true, data: { id: 'x' } });
     h.reorderIssuesAction.mockReset().mockResolvedValue({ ok: true, data: {} });
     h.moveIssueAction.mockReset().mockResolvedValue({ ok: true, data: {} });
+    h.solveIssueAction.mockReset().mockResolvedValue({ ok: true, data: { teamId: 'mk1' } });
+    h.reopenIssueAction.mockReset().mockResolvedValue({ ok: true, data: {} });
   });
 
   it('shows the empty state when there are no open issues', () => {
@@ -126,5 +132,36 @@ describe('IssuesView', () => {
       expect(h.moveIssueAction).toHaveBeenCalledWith({ issueId: 'i1', toListType: 'LONG' }),
     );
     expect(h.refresh).toHaveBeenCalled();
+  });
+
+  it('solves an issue with a resolution note (optimistic, moves to Solved)', async () => {
+    const user = userEvent.setup();
+    renderView([issue('Slow site', 'SHORT')]);
+    await user.click(screen.getByLabelText(/solve slow site/i));
+    await user.type(screen.getByLabelText(/resolution note/i), 'Upgraded host');
+    await user.click(screen.getByRole('button', { name: /mark solved/i }));
+    await waitFor(() =>
+      expect(h.solveIssueAction).toHaveBeenCalledWith({
+        issueId: 'i1',
+        resolutionNote: 'Upgraded host',
+      }),
+    );
+    // optimistically appears under Solved
+    const solvedSection = await screen.findByRole('region', { name: 'Solved' });
+    expect(within(solvedSection).getByText('Slow site')).toBeInTheDocument();
+  });
+
+  it('reopens a solved issue from the Solved section', async () => {
+    const user = userEvent.setup();
+    renderView([
+      issue('Old bug', 'SHORT', {
+        solved: true,
+        solvedAt: '2026-10-01T00:00:00.000Z',
+        resolutionNote: 'Done',
+      }),
+    ]);
+    const solvedSection = screen.getByRole('region', { name: 'Solved' });
+    await user.click(within(solvedSection).getByRole('button', { name: /reopen/i }));
+    await waitFor(() => expect(h.reopenIssueAction).toHaveBeenCalledWith({ issueId: 'i1' }));
   });
 });
