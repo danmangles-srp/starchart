@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { usePathname, useParams } from 'next/navigation';
+import { useState, type FormEvent, type ReactNode } from 'react';
+import { usePathname, useParams, useRouter } from 'next/navigation';
 import NextLink from 'next/link';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
@@ -20,6 +20,8 @@ import Avatar from '@mui/material/Avatar';
 import Chip from '@mui/material/Chip';
 import Tooltip from '@mui/material/Tooltip';
 import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import InputBase from '@mui/material/InputBase';
 import { systemClock, timeAnchor } from '@/lib/time';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/HomeOutlined';
@@ -37,6 +39,41 @@ import type { TeamSummaryRow } from '@/features/org/domain/teams';
 import { MODULE_NAV, routes, type ModuleKey } from '@/lib/routes';
 
 const DRAWER_WIDTH = 260;
+
+/** App-bar global search box — submits to /search (FR-8.1). */
+function SearchBox({ onSubmit }: { onSubmit: (q: string) => void }) {
+  const [value, setValue] = useState('');
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    const q = value.trim();
+    if (q.length > 0) onSubmit(q);
+  }
+  return (
+    <Box
+      component="form"
+      role="search"
+      onSubmit={submit}
+      sx={{
+        display: { xs: 'none', sm: 'flex' },
+        alignItems: 'center',
+        gap: 0.5,
+        px: 1,
+        borderRadius: 1,
+        bgcolor: 'action.hover',
+      }}
+    >
+      <SearchIcon fontSize="small" color="action" />
+      <InputBase
+        type="search"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Search…"
+        inputProps={{ 'aria-label': 'Search' }}
+        sx={{ fontSize: 14, width: { sm: 140, md: 200 } }}
+      />
+    </Box>
+  );
+}
 
 /**
  * The shared "today" anchor (FR-7.3 / INV-4): the current calendar quarter + ISO week,
@@ -82,6 +119,7 @@ export default function AppShell({
   teams?: TeamSummaryRow[];
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const router = useRouter();
   const pathname = usePathname();
   const params = useParams<{ teamId?: string }>();
   const activeTeamId = typeof params?.teamId === 'string' ? params.teamId : null;
@@ -186,6 +224,7 @@ export default function AppShell({
             Cadence
           </Typography>
           <Box sx={{ flexGrow: 1 }} />
+          <SearchBox onSubmit={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)} />
           <TimeAnchorChip />
           <ThemeToggle />
           <Tooltip title="Profile (M1)">

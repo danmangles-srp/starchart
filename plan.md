@@ -162,7 +162,7 @@ the PR.** Don't re-ask a resolved decision.
 | M4 Todos | **COMPLETE** |
 | M5 Issues (incl. solve → convert) | **IN PROGRESS** |
 | M6 My Week home + Team dashboards | **COMPLETE** |
-| M7 Polish: search, notifications, a11y/perf/responsive | PLANNED |
+| M7 Polish: search, notifications, a11y/perf/responsive | **IN PROGRESS** |
 
 ---
 
@@ -438,7 +438,7 @@ FR-7.
 
 **Objective:** the cross-cutting layer that makes it feel finished. **ACs:** FR-8, NFR-2/3/7/9.
 
-- **T7.1 — Global search.**
+- **COMPLETE · T7.1 — Global search.**
   `Build:` cross-module search over **readable teams only**, grouped results with deep links. `Gate:`
   search-query unit tests + component test. `ACs:` FR-8.1. `Inv:` INV-2, INV-8. `Deps:` M2–M5. `Ask:` —
 - **T7.2— Accessibility pass.**
