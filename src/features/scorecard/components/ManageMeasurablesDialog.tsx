@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 import Alert from '@mui/material/Alert';
@@ -159,7 +159,6 @@ export default function ManageMeasurablesDialog({
     handleSubmit,
     control,
     reset,
-    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(MeasurableFieldsSchema),
@@ -173,7 +172,7 @@ export default function ManageMeasurablesDialog({
       unit: '',
     },
   });
-  const comparator = watch('comparator');
+  const comparator = useWatch({ control, name: 'comparator' });
 
   const title = useMemo(() => (editingId ? 'Edit measurable' : 'Add a measurable'), [editingId]);
 
