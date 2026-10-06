@@ -329,7 +329,7 @@ evaluation, and trends. **ACs:** FR-4.
   `Build:` add/edit/reorder (dnd-kit)/**archive** measurable + assign owner (Team Lead/Admin); **archive
   writes the activity log** (INV-10). `Gate:` form + reorder + archive-logs-activity tests; authz test.
   `ACs:` FR-4.1, FR-2.6. `Inv:` INV-1, INV-10. `Deps:` T3.3, T1.6. `Ask:` —
-- **T3.6 — Trend & summary.**
+- **COMPLETE · T3.6 — Trend & summary.**
   `Build:` row 13-week summary cell; expand a measurable → MUI X Charts trend with the goal line + entry
   history + a **chart text alternative**. `Gate:` summary unit test; chart component test incl. text-alt.
   `ACs:` FR-4.3, FR-4.5, NFR-3.5. `Inv:` INV-3, INV-7. `Deps:` T3.2, T3.3. `Ask:` —
