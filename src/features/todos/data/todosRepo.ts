@@ -92,20 +92,15 @@ export interface UpdateTodoInput {
   dueDate: Date;
 }
 
-/** Edit a todo's fields (not its done state). orgId-scoped. Returns its teamId. */
+/** Edit a todo's fields (not its done state). orgId-scoped in one write. */
 export async function updateTodo(
   orgId: string,
   todoId: string,
   input: UpdateTodoInput,
   prisma: PrismaClient = db,
-): Promise<string> {
-  const existing = await prisma.todo.findFirst({
+): Promise<void> {
+  const result = await prisma.todo.updateMany({
     where: { id: todoId, orgId },
-    select: { teamId: true },
-  });
-  if (!existing) throw new NotFoundError('Todo not found.');
-  await prisma.todo.update({
-    where: { id: todoId },
     data: {
       title: input.title,
       notes: input.notes ?? null,
@@ -113,27 +108,7 @@ export async function updateTodo(
       dueDate: input.dueDate,
     },
   });
-  return existing.teamId;
-}
-
-/** Set/clear a todo's done state, stamping completedAt. orgId-scoped. Returns its teamId. */
-export async function setTodoDone(
-  orgId: string,
-  todoId: string,
-  done: boolean,
-  now: Date,
-  prisma: PrismaClient = db,
-): Promise<string> {
-  const existing = await prisma.todo.findFirst({
-    where: { id: todoId, orgId },
-    select: { teamId: true },
-  });
-  if (!existing) throw new NotFoundError('Todo not found.');
-  await prisma.todo.update({
-    where: { id: todoId },
-    data: { done, completedAt: done ? now : null },
-  });
-  return existing.teamId;
+  if (result.count === 0) throw new NotFoundError('Todo not found.');
 }
 
 /** Hard-delete a todo (7-day items aren't archived). orgId-scoped. Returns its teamId. */
