@@ -6,6 +6,8 @@ import {
   myOpenIssuesFor,
   teamIssueSummary,
   getIssueTeamId,
+  reorderIssues,
+  moveIssue,
 } from './issuesRepo';
 
 const testUrl = process.env.DATABASE_URL_TEST;
@@ -110,5 +112,41 @@ describe.skipIf(!testUrl)('issuesRepo (Tier 2.5)', () => {
     expect(summary.longOpen).toBe(1);
     expect(summary.shortOpen).toBe(3);
     expect(summary.total).toBe(5);
+  });
+
+  it('persists a reorder within a list', async () => {
+    if (!prisma) return;
+    const x = await createIssue(
+      orgId,
+      { teamId: otherTeamId, title: 'X', raiserId: userId, listType: 'SHORT' },
+      prisma,
+    );
+    const y = await createIssue(
+      orgId,
+      { teamId: otherTeamId, title: 'Y', raiserId: userId, listType: 'SHORT' },
+      prisma,
+    );
+    await reorderIssues(orgId, otherTeamId, 'SHORT', [y.id, x.id], prisma);
+    const ids = (await listTeamIssues(orgId, otherTeamId, prisma))
+      .filter((i) => i.listType === 'SHORT')
+      .map((i) => i.id)
+      .filter((id) => id === x.id || id === y.id);
+    expect(ids).toEqual([y.id, x.id]); // y now ranks before x
+  });
+
+  it('moves an issue to the other list and appends it', async () => {
+    if (!prisma) return;
+    const z = await createIssue(
+      orgId,
+      { teamId: otherTeamId, title: 'Z', raiserId: userId, listType: 'SHORT' },
+      prisma,
+    );
+    const team = await moveIssue(orgId, z.id, 'LONG', prisma);
+    expect(team).toBe(otherTeamId);
+    const longs = (await listTeamIssues(orgId, otherTeamId, prisma)).filter(
+      (i) => i.listType === 'LONG',
+    );
+    expect(longs.some((i) => i.id === z.id)).toBe(true);
+    expect(longs[longs.length - 1]?.id).toBe(z.id); // appended last
   });
 });

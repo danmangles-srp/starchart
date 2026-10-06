@@ -4,15 +4,23 @@ import type { Viewer } from '@/lib/auth/permissions';
 const h = vi.hoisted(() => ({
   requireUser: vi.fn(),
   createIssue: vi.fn(),
+  reorderIssues: vi.fn(),
+  moveIssue: vi.fn(),
+  getIssueTeamId: vi.fn(),
   listTeamMembers: vi.fn(),
   revalidatePath: vi.fn(),
 }));
 vi.mock('@/lib/auth/requireUser', () => ({ requireUser: h.requireUser }));
 vi.mock('next/cache', () => ({ revalidatePath: h.revalidatePath }));
 vi.mock('@/features/org/data/teams', () => ({ listTeamMembers: h.listTeamMembers }));
-vi.mock('../data/issuesRepo', () => ({ createIssue: h.createIssue }));
+vi.mock('../data/issuesRepo', () => ({
+  createIssue: h.createIssue,
+  reorderIssues: h.reorderIssues,
+  moveIssue: h.moveIssue,
+  getIssueTeamId: h.getIssueTeamId,
+}));
 
-import { createIssueAction } from './actions';
+import { createIssueAction, reorderIssuesAction, moveIssueAction } from './actions';
 
 const member: Viewer = {
   id: 'u1',
@@ -25,6 +33,9 @@ const outsider: Viewer = { id: 'u2', orgId: 'org1', isAdmin: false, memberships:
 beforeEach(() => {
   h.requireUser.mockReset().mockResolvedValue(member);
   h.createIssue.mockReset().mockResolvedValue({ id: 'i1' });
+  h.reorderIssues.mockReset().mockResolvedValue(undefined);
+  h.moveIssue.mockReset().mockResolvedValue('mk1');
+  h.getIssueTeamId.mockReset().mockResolvedValue('mk1');
   h.listTeamMembers.mockReset().mockResolvedValue([{ userId: 'u1', name: 'Alice' }]);
   h.revalidatePath.mockReset();
 });
@@ -68,5 +79,38 @@ describe('createIssueAction', () => {
     const res = await createIssueAction({ teamId: 'mk1', title: '  ', listType: 'SHORT' });
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.error).toBe('invalid-input');
+  });
+});
+
+describe('reorderIssuesAction / moveIssueAction', () => {
+  it('reorders a list for a member', async () => {
+    const res = await reorderIssuesAction({
+      teamId: 'mk1',
+      listType: 'SHORT',
+      orderedIds: ['i2', 'i1'],
+    });
+    expect(res.ok).toBe(true);
+    expect(h.reorderIssues).toHaveBeenCalledWith('org1', 'mk1', 'SHORT', ['i2', 'i1']);
+  });
+
+  it('blocks reorder for a non-member', async () => {
+    h.requireUser.mockResolvedValue(outsider);
+    const res = await reorderIssuesAction({ teamId: 'mk1', listType: 'SHORT', orderedIds: ['i1'] });
+    expect(res.ok).toBe(false);
+    expect(h.reorderIssues).not.toHaveBeenCalled();
+  });
+
+  it('moves an issue to the other list for a member', async () => {
+    const res = await moveIssueAction({ issueId: 'i1', toListType: 'LONG' });
+    expect(res.ok).toBe(true);
+    expect(h.moveIssue).toHaveBeenCalledWith('org1', 'i1', 'LONG');
+    expect(h.revalidatePath).toHaveBeenCalledWith('/t/mk1/issues');
+  });
+
+  it('blocks move for a non-member', async () => {
+    h.requireUser.mockResolvedValue(outsider);
+    const res = await moveIssueAction({ issueId: 'i1', toListType: 'LONG' });
+    expect(res.ok).toBe(false);
+    expect(h.moveIssue).not.toHaveBeenCalled();
   });
 });
