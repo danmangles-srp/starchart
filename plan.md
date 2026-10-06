@@ -420,7 +420,7 @@ FR-7.
   `Build:` the personal landing — four aggregate panels, deep links (INV-8), four states (inviting
   empty); becomes the post-login route. `Gate:` component tests per state + deep-link targets. `ACs:`
   FR-7.1, NFR-9.1. `Inv:` INV-6, INV-7, INV-8. `Deps:` T6.1. `Ask:` —
-- **T6.3 — Team dashboard.**
+- **COMPLETE · T6.3 — Team dashboard.**
   `Build:` per-team landing summarizing all four modules (Rocks on-track, this week's Scorecard
   red/green, open Issues short/long, Todos open/due) with quick links. `Gate:` component test + counts.
   `ACs:` FR-7.2. `Inv:` INV-6, INV-7, INV-8. `Deps:` T6.1. `Ask:` —

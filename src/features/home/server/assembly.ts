@@ -34,6 +34,22 @@ export async function loadMyWeek(viewer: Viewer, now: Date = new Date()): Promis
   return { rocks, todos, measurables, issues };
 }
 
+/** The four INV-9 teamSummary contracts for one team (team-dashboard landing). */
+export async function loadTeamDashboard(
+  viewer: Viewer,
+  teamId: string,
+  now: Date = new Date(),
+): Promise<TeamSummaries> {
+  const quarter = await currentQuarter(viewer, now);
+  const [rocks, scorecard, todos, issues] = await Promise.all([
+    teamRockSummary(viewer.orgId, teamId, quarter),
+    teamScorecardSummary(viewer.orgId, teamId, now),
+    teamTodoSummary(viewer.orgId, teamId, now),
+    teamIssueSummary(viewer.orgId, teamId),
+  ]);
+  return { rocks, scorecard, todos, issues };
+}
+
 /** Assemble a team dashboard per readable team from the four INV-9 teamSummary contracts. */
 export async function loadTeamDashboards(
   viewer: Viewer,
