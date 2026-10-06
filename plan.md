@@ -148,8 +148,8 @@ the PR.** Don't re-ask a resolved decision.
 
 ## Plan of Attack (restart here)
 
-> Status as of **2026-10-04**. Greenfield — nothing built yet. Execute top-down; one ticket = one PR off
-> `main`.
+> Status as of **2026-10-06**. M0–M2 complete; M3 in progress (T3.1–T3.4 merged). Execute top-down;
+> one ticket = one PR off `main`.
 
 ### Status board
 
@@ -321,7 +321,7 @@ evaluation, and trends. **ACs:** FR-4.
   = measurable. Admin can view/edit any team. `Gate:` component tests (render, color+marker, keyboard nav,
   access control). `ACs:` FR-4.2, FR-4.3, FR-4.4, NFR-3.2, NFR-3.3. `Inv:` INV-6, INV-7, INV-8. `Deps:`
   T3.1, T3.2, T0.4. `Ask:` —
-- **T3.4 — Inline weekly entry (optimistic).**
+- **COMPLETE (#23) · T3.4 — Inline weekly entry (optimistic).**
   `Build:` edit/clear a cell inline; `useOptimisticMutation` save + visible rollback on failure; **empty
   vs 0 preserved**. `Gate:` optimistic-rollback + empty/0 tests; server-authz (non-member cell blocked).
   `ACs:` FR-4.2, NFR-5.1. `Inv:` INV-1, INV-5. `Deps:` T3.3. `Ask:` —
@@ -333,6 +333,22 @@ evaluation, and trends. **ACs:** FR-4.
   `Build:` row 13-week summary cell; expand a measurable → MUI X Charts trend with the goal line + entry
   history + a **chart text alternative**. `Gate:` summary unit test; chart component test incl. text-alt.
   `ACs:` FR-4.3, FR-4.5, NFR-3.5. `Inv:` INV-3, INV-7. `Deps:` T3.2, T3.3. `Ask:` —
+- **T3.7 — BUG: Google sign-in fails (400 invalid_request, `flowName=GeneralOAuthFlow`).**
+  `Symptom:` clicking "Sign in with Google" returns Google error 400 `invalid_request` before consent.
+  `Build:` make Google OAuth complete end-to-end in dev + prod. Likely causes, check in order:
+  (1) the **Authorized redirect URI** in the Google Cloud OAuth client doesn't exactly match Auth.js's
+  callback — must list `http://localhost:3000/api/auth/callback/google` (dev) **and** the deployed
+  `https://<domain>/api/auth/callback/google` (no trailing slash, scheme + host exact);
+  (2) **Authorized JavaScript origins** missing `http://localhost:3000` / the prod origin;
+  (3) env: `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` set + loaded, `AUTH_URL` correct, `AUTH_TRUST_HOST=true`
+  behind the proxy, `AUTH_SECRET` present;
+  (4) OAuth consent screen still in **Testing** without the signing-in address on the test-user list;
+  (5) the Google client is **Web application** type (not Desktop/other).
+  `Gate:` document the fixed config in the PR; add an `AUTH`-tagged log on sign-in start/callback for the
+  debug surface; manual acceptance: a domain user signs in with Google and lands authenticated (OAuth
+  round-trip can't run in the gate). Confirm Microsoft Entra still works with the same callback shape.
+  `ACs:` FR-1.1, NFR (identity). `Inv:` INV-11 (secrets in env only). `Deps:` M0 auth. `Ask:` — report
+  the exact prod domain + which providers/envs are configured if the cause isn't obvious from the console.
 
 ---
 

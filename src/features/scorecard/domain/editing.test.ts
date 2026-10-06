@@ -11,6 +11,7 @@ function row(): ScorecardRowVM {
   return {
     id: 'm1',
     name: 'Calls',
+    ownerId: 'u1',
     ownerName: 'Alice',
     goalLabel: '≥ 50',
     summary: '0/1 on goal',

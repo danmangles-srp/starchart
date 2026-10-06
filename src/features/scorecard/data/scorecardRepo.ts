@@ -88,6 +88,77 @@ export async function createMeasurable(
   });
 }
 
+export interface UpdateMeasurableInput {
+  name: string;
+  ownerId: string;
+  goalValue: number;
+  goalMax?: number | null;
+  comparator: Comparator;
+  format?: MeasurableFormat;
+  unit?: string | null;
+}
+
+/** Edit a measurable's definition (not its weekly values). orgId-scoped. Returns its teamId. */
+export async function updateMeasurable(
+  orgId: string,
+  measurableId: string,
+  input: UpdateMeasurableInput,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.measurable.findFirst({
+    where: { id: measurableId, orgId },
+    select: { teamId: true },
+  });
+  if (!existing) throw new NotFoundError('Measurable not found.');
+  await prisma.measurable.update({
+    where: { id: measurableId },
+    data: {
+      name: input.name,
+      ownerId: input.ownerId,
+      goalValue: input.goalValue,
+      goalMax: input.goalMax ?? null,
+      comparator: input.comparator,
+      format: input.format ?? 'NUMBER',
+      unit: input.unit ?? null,
+    },
+  });
+  return existing.teamId;
+}
+
+/** Archive (never hard-delete, INV-10) a measurable. Idempotent. Returns its teamId. */
+export async function archiveMeasurable(
+  orgId: string,
+  measurableId: string,
+  prisma: PrismaClient = db,
+): Promise<string> {
+  const existing = await prisma.measurable.findFirst({
+    where: { id: measurableId, orgId },
+    select: { teamId: true, archivedAt: true },
+  });
+  if (!existing) throw new NotFoundError('Measurable not found.');
+  if (existing.archivedAt === null) {
+    await prisma.measurable.update({
+      where: { id: measurableId },
+      data: { archivedAt: new Date() },
+    });
+  }
+  return existing.teamId;
+}
+
+/** Persist a new display order for a team's active measurables (dnd reorder). orgId-scoped. */
+export async function reorderMeasurables(
+  orgId: string,
+  teamId: string,
+  orderedIds: string[],
+  prisma: PrismaClient = db,
+): Promise<void> {
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.measurable.updateMany({ where: { id, orgId, teamId }, data: { order: index + 1 } }),
+    ),
+  );
+}
+
 /** The team a measurable belongs to, or null if it isn't in this org (authz for entry writes). */
 export async function getMeasurableTeamId(
   orgId: string,
