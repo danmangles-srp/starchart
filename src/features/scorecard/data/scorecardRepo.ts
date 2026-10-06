@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
 import { NotFoundError } from '@/lib/auth/errors';
+import { MAX_TEAM_LIST } from '@/lib/bounds';
 import { trailingIsoWeeks } from '@/lib/time';
 import { evaluateGoal, latestEnteredValue, weekMapKey, type GoalStatus } from '../domain/scorecard';
 import type {
@@ -64,6 +65,7 @@ export async function listMeasurables(
     where: { orgId, teamId, archivedAt: null },
     include: { owner: { select: { name: true, email: true } } },
     orderBy: { order: 'asc' },
+    take: MAX_TEAM_LIST,
   });
   return rows.map((r) => toRow(r as unknown as MeasurableWithOwner));
 }

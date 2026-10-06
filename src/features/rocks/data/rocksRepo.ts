@@ -1,6 +1,7 @@
 import type { PrismaClient } from '@prisma/client';
 import { db } from '@/lib/db';
 import { AppError, NotFoundError } from '@/lib/auth/errors';
+import { MAX_TEAM_LIST } from '@/lib/bounds';
 import type { RockStatus } from '@/theme/status';
 import {
   toRockStatus,
@@ -96,6 +97,7 @@ export async function listTeamRocks(
     where: { orgId, teamId, fiscalYear: quarter.fiscalYear, quarterIndex: quarter.quarterIndex },
     include: withMilestones,
     orderBy: { createdAt: 'asc' },
+    take: MAX_TEAM_LIST,
   });
   return rocks.map((r) => toSummary(r as unknown as RockRow));
 }

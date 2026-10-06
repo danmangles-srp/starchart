@@ -446,7 +446,7 @@ FR-7.
   screen-reader labels/roles, 200% zoom, chart text-alternatives; fix gaps. `Gate:` a11y assertions in
   component tests; documented manual SR/zoom checks. `ACs:` NFR-3.\*. `Inv:` INV-6, INV-7. `Deps:` M6.
   `Ask:` —
-- **T7.3 — Performance pass.**
+- **COMPLETE · T7.3 — Performance pass.**
   `Build:` Scorecard virtualization/efficiency to NFR-2.2, route prefetch, bundle trim, bounded-query
   audit. `Gate:` perf-sensitive unit tests; documented measurements vs NFR-2. `ACs:` NFR-2.\*. `Inv:`
   INV-2. `Deps:` M6. `Ask:` —
