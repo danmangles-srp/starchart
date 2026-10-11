@@ -7,6 +7,7 @@ import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import StatusChip from '@/components/StatusChip';
+import { hoverLift } from '@/lib/motion/interactions';
 import { ROCK_STATUSES, ROCK_STATUS_META, type RockStatus } from '@/theme/status';
 import { milestoneProgress, type RockSummary } from '../domain/rock';
 
@@ -20,7 +21,7 @@ export default function RockCard({
   disabled?: boolean;
 }) {
   return (
-    <Card variant="outlined">
+    <Card variant="outlined" sx={hoverLift}>
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
           <Box sx={{ minWidth: 0 }}>
