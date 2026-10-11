@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ComponentProps } from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
@@ -45,7 +46,7 @@ const members = [
   { userId: 'u2', name: 'Bob' },
 ];
 
-function renderView(items = rocks) {
+function renderView(items = rocks, extra?: Partial<ComponentProps<typeof RocksView>>) {
   return render(
     <ThemeProvider theme={theme}>
       <RocksView
@@ -54,6 +55,8 @@ function renderView(items = rocks) {
         selected={{ fiscalYear: 2026, quarterIndex: 1 }}
         teamId="mk1"
         members={members}
+        allowedLevels={['TEAM']}
+        {...extra}
       />
     </ThemeProvider>,
   );
@@ -116,5 +119,27 @@ describe('RocksView', () => {
   it('shows an inviting empty state', () => {
     renderView([]);
     expect(screen.getByText(/no rocks here yet/i)).toBeInTheDocument();
+  });
+
+  it('renders a Company Rocks section on the Leadership board (B1)', () => {
+    const companyRocks: RockSummary[] = [
+      {
+        ...base,
+        id: 'c1',
+        title: 'Double revenue',
+        level: 'COMPANY',
+        teamId: null,
+        status: 'at-risk',
+      },
+    ];
+    renderView(rocks, { companyRocks, allowedLevels: ['TEAM', 'COMPANY'] });
+    expect(screen.getByRole('region', { name: 'Company Rocks' })).toBeInTheDocument();
+    expect(screen.getByText('Double revenue')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Team Rocks' })).toBeInTheDocument();
+  });
+
+  it('hides the Add button when the viewer may create no level here', () => {
+    renderView(rocks, { allowedLevels: [] });
+    expect(screen.queryByRole('button', { name: 'Add Rock' })).toBeNull();
   });
 });

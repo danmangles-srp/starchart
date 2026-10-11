@@ -107,7 +107,12 @@ export default function MyWeekView({ data }: { data: MyWeekData }) {
           alignItems: 'start',
         }}
       >
-        <PanelCard title="My Rocks" count={data.rocks.length} emptyText="No Rocks this quarter.">
+        <PanelCard
+          title="My Rocks"
+          count={data.rocks.length}
+          href="/me/rocks"
+          emptyText="No Rocks this quarter."
+        >
           {data.rocks.slice(0, MAX_ITEMS).map((r) => (
             <Stack
               key={r.id}
@@ -116,21 +121,15 @@ export default function MyWeekView({ data }: { data: MyWeekData }) {
               alignItems="center"
               gap={1}
             >
-              {r.teamId ? (
-                <Link
-                  component={NextLink}
-                  href={`/t/${r.teamId}/rocks`}
-                  variant="body2"
-                  underline="hover"
-                  noWrap
-                >
-                  {r.title}
-                </Link>
-              ) : (
-                <Typography variant="body2" noWrap>
-                  {r.title}
-                </Typography>
-              )}
+              <Link
+                component={NextLink}
+                href={r.teamId ? `/t/${r.teamId}/rocks` : '/me/rocks'}
+                variant="body2"
+                underline="hover"
+                noWrap
+              >
+                {r.title}
+              </Link>
               <StatusChip status={r.status} />
             </Stack>
           ))}

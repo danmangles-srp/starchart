@@ -4,6 +4,8 @@ import { NotFoundError } from '@/lib/auth/errors';
 import {
   createRock,
   listTeamRocks,
+  listCompanyRocks,
+  listIndividualRocks,
   getRockDetail,
   setRockStatus,
   myRocksFor,
@@ -72,6 +74,38 @@ describe.skipIf(!testUrl)('rocksRepo (Tier 2.5)', () => {
 
     const summary = await teamRockSummary(orgId, teamId, quarter, prisma);
     expect(summary).toMatchObject({ total: 1, onTrack: 1, atRisk: 0 });
+  });
+
+  it('lists Company and Individual rocks by level, scoped to org/owner (B1)', async () => {
+    if (!prisma) return;
+    await createRock(
+      orgId,
+      {
+        title: 'Company Goal',
+        ownerId: userId,
+        level: 'COMPANY',
+        fiscalYear: 2026,
+        quarterIndex: 1,
+      },
+      prisma,
+    );
+    await createRock(
+      orgId,
+      { title: 'My Rock', ownerId: userId, level: 'INDIVIDUAL', fiscalYear: 2026, quarterIndex: 1 },
+      prisma,
+    );
+
+    const company = await listCompanyRocks(orgId, quarter, prisma);
+    expect(company.map((r) => r.title)).toContain('Company Goal');
+    expect(company.every((r) => r.level === 'COMPANY')).toBe(true);
+
+    const mine = await listIndividualRocks(orgId, userId, quarter, prisma);
+    expect(mine.map((r) => r.title)).toContain('My Rock');
+    expect(mine.every((r) => r.level === 'INDIVIDUAL' && r.ownerId === userId)).toBe(true);
+
+    // Cross-org and cross-owner isolation.
+    expect(await listCompanyRocks('other-org', quarter, prisma)).toHaveLength(0);
+    expect(await listIndividualRocks(orgId, 'other-user', quarter, prisma)).toHaveLength(0);
   });
 
   it('updates status and refuses cross-org writes', async () => {
