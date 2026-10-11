@@ -33,7 +33,7 @@ import SettingsIcon from '@mui/icons-material/SettingsOutlined';
 import type { SvgIconProps } from '@mui/material/SvgIcon';
 import type { ComponentType } from 'react';
 import ThemeToggle from '@/components/ThemeToggle';
-import SignOutButton from '@/features/auth/components/SignOutButton';
+import ProfileMenu, { type ViewerIdentity } from '@/features/profile/components/ProfileMenu';
 import TeamSwitcher from '@/features/org/components/TeamSwitcher';
 import type { TeamSummaryRow } from '@/features/org/domain/teams';
 import { MODULE_NAV, routes, type ModuleKey } from '@/lib/routes';
@@ -114,9 +114,11 @@ const MODULE_ICON: Record<ModuleKey, ComponentType<SvgIconProps>> = {
 export default function AppShell({
   children,
   teams = [],
+  viewer,
 }: {
   children: ReactNode;
   teams?: TeamSummaryRow[];
+  viewer?: ViewerIdentity;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
@@ -269,12 +271,13 @@ export default function AppShell({
           <SearchBox onSubmit={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)} />
           <TimeAnchorChip />
           <ThemeToggle />
-          <Tooltip title="Profile (M1)">
+          {viewer ? (
+            <ProfileMenu identity={viewer} />
+          ) : (
             <Avatar sx={{ width: 32, height: 32, fontSize: 14 }} aria-label="Profile">
               U
             </Avatar>
-          </Tooltip>
-          <SignOutButton />
+          )}
         </Toolbar>
       </AppBar>
 

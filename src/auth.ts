@@ -42,7 +42,10 @@ function orgScopedAdapter(): Adapter {
 export const authConfig: NextAuthConfig = {
   adapter: orgScopedAdapter(),
   session: { strategy: 'database' },
-  pages: { signIn: '/sign-in' },
+  // Route auth errors (e.g. a denied domain/tenant → AccessDenied) back to our own
+  // sign-in screen so the user sees a plain-language message (AC-1.1.3), not the
+  // default Auth.js error page.
+  pages: { signIn: '/sign-in', error: '/sign-in' },
   providers: [
     Google({ allowDangerousEmailAccountLinking: true }),
     MicrosoftEntraID({

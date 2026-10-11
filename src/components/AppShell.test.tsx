@@ -21,10 +21,10 @@ vi.mock('next/link', () => ({
   ),
 }));
 
-function renderShell() {
+function renderShell(viewer?: Parameters<typeof AppShell>[0]['viewer']) {
   return render(
     <ThemeProvider theme={theme}>
-      <AppShell teams={[]}>
+      <AppShell teams={[]} viewer={viewer}>
         <div>Main content</div>
       </AppShell>
     </ThemeProvider>,
@@ -61,6 +61,11 @@ describe('AppShell', () => {
     renderShell();
     const link = screen.getAllByRole('link', { name: 'Rocks' })[0];
     expect(link).toHaveAttribute('href', '/t/marketing/rocks');
+  });
+
+  it('surfaces the signed-in user in the app bar when a viewer is passed (AC-1.3.1)', () => {
+    renderShell({ name: 'Ada Lovelace', email: 'ada@acme.com', image: null, jobTitle: null });
+    expect(screen.getByRole('button', { name: /Account: Ada Lovelace/ })).toBeInTheDocument();
   });
 
   it('shows the shared time anchor (current quarter + ISO week)', () => {
