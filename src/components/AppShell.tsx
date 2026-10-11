@@ -22,7 +22,7 @@ import Tooltip from '@mui/material/Tooltip';
 import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import InputBase from '@mui/material/InputBase';
-import { systemClock, timeAnchor, type TimeAnchor } from '@/lib/time';
+import { systemClock, timeAnchor, type ResolvedQuarter } from '@/lib/time';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/HomeOutlined';
 import FlagIcon from '@mui/icons-material/FlagOutlined';
@@ -76,14 +76,14 @@ function SearchBox({ onSubmit }: { onSubmit: (q: string) => void }) {
 }
 
 /**
- * The shared "today" anchor (FR-7.3 / INV-4): the current calendar quarter + ISO week,
- * so Rocks (quarter) and Scorecard/Todos (week) read against one consistent context.
+ * The shared "today" anchor (FR-7.3 / INV-4): the current quarter + ISO week, so Rocks
+ * (quarter) and Scorecard/Todos (week) read against one consistent context. The quarter
+ * is resolved server-side from the org's definitions (AC-3.2.4) and passed in; the ISO
+ * week is computed here on the client so it reflects the viewer's timezone (INV-4).
  * Historical browsing stays in-module (the Rocks quarter selector, the Scorecard pager).
  */
-function TimeAnchorChip({ anchor }: { anchor?: TimeAnchor }) {
-  // Prefer the server-resolved anchor (org quarter definitions, AC-3.2.4); fall back
-  // to a client-computed calendar anchor when none is supplied.
-  const a = anchor ?? timeAnchor(systemClock.now());
+function TimeAnchorChip({ quarter }: { quarter?: ResolvedQuarter }) {
+  const a = timeAnchor(systemClock.now(), quarter);
   return (
     <Tooltip title="Current quarter and week">
       <Chip
@@ -117,12 +117,12 @@ export default function AppShell({
   children,
   teams = [],
   viewer,
-  timeAnchor: anchor,
+  currentQuarter,
 }: {
   children: ReactNode;
   teams?: TeamSummaryRow[];
   viewer?: ViewerIdentity;
-  timeAnchor?: TimeAnchor;
+  currentQuarter?: ResolvedQuarter;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
@@ -273,7 +273,7 @@ export default function AppShell({
             <SearchIcon />
           </IconButton>
           <SearchBox onSubmit={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)} />
-          <TimeAnchorChip anchor={anchor} />
+          <TimeAnchorChip quarter={currentQuarter} />
           <ThemeToggle />
           {viewer ? (
             <ProfileMenu identity={viewer} />

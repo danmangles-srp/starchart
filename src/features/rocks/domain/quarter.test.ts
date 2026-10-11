@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   resolveCurrentQuarter,
+  resolveCurrentQuarterOption,
   isQuarterClosed,
   listQuarters,
   quarterKeyEquals,
@@ -33,6 +34,23 @@ describe('resolveCurrentQuarter', () => {
     expect(resolveCurrentQuarter([], new Date('2026-05-10T00:00:00Z'))).toEqual({
       fiscalYear: 2026,
       quarterIndex: 2,
+    });
+  });
+});
+
+describe('resolveCurrentQuarterOption', () => {
+  it('returns the matching definition with its label', () => {
+    expect(resolveCurrentQuarterOption([q1, q2], new Date('2026-02-15T12:00:00Z'))).toEqual({
+      fiscalYear: 2026,
+      quarterIndex: 1,
+      label: 'Q1 2026',
+    });
+  });
+  it('falls back to a calendar label when no definition matches', () => {
+    expect(resolveCurrentQuarterOption([], new Date('2026-05-10T00:00:00Z'))).toEqual({
+      fiscalYear: 2026,
+      quarterIndex: 2,
+      label: 'Q2 2026',
     });
   });
 });

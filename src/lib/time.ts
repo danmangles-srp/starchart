@@ -90,11 +90,12 @@ export function calendarQuarterKey(date: Date): QuarterKey {
  * or empty zone falls back to UTC so a bad viewer value never throws in render.
  */
 export function formatInTz(instant: Date | string, timeZone: string, fmt: string): string {
+  const date = new Date(instant);
   const zone = timeZone && timeZone.trim().length > 0 ? timeZone : 'UTC';
   try {
-    return formatInTimeZone(new Date(instant), zone, fmt);
+    return formatInTimeZone(date, zone, fmt);
   } catch {
-    return formatInTimeZone(new Date(instant), 'UTC', fmt);
+    return formatInTimeZone(date, 'UTC', fmt);
   }
 }
 
@@ -121,10 +122,12 @@ export interface ResolvedQuarter {
  * selector's own fallback. The ISO week is always derived from `now`.
  */
 export function timeAnchor(now: Date, quarter?: ResolvedQuarter): TimeAnchor {
-  const q = quarter ?? {
-    ...calendarQuarterKey(now),
-    label: `Q${calendarQuarterKey(now).quarterIndex} ${calendarQuarterKey(now).fiscalYear}`,
-  };
+  const q =
+    quarter ??
+    (() => {
+      const ck = calendarQuarterKey(now);
+      return { ...ck, label: `Q${ck.quarterIndex} ${ck.fiscalYear}` };
+    })();
   const w = isoWeekKey(now);
   return {
     fiscalYear: q.fiscalYear,

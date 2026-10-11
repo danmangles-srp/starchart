@@ -57,6 +57,20 @@ export function quarterKeyEquals(a: QuarterKey, b: QuarterKey): boolean {
   return a.fiscalYear === b.fiscalYear && a.quarterIndex === b.quarterIndex;
 }
 
+/**
+ * The current quarter as a labelled option (key + display label), resolving from the
+ * org's definitions with a calendar fallback (AC-3.2.4). One call for callers that
+ * need the label too (e.g. the app-bar anchor), instead of re-scanning the list.
+ */
+export function resolveCurrentQuarterOption(defs: QuarterDef[], now: Date): QuarterOption {
+  const key = resolveCurrentQuarter(defs, now);
+  const label =
+    listQuarters(defs, now).find(
+      (o) => o.fiscalYear === key.fiscalYear && o.quarterIndex === key.quarterIndex,
+    )?.label ?? `Q${key.quarterIndex} ${key.fiscalYear}`;
+  return { fiscalYear: key.fiscalYear, quarterIndex: key.quarterIndex, label };
+}
+
 /** Parse an `fy`/`q` search-param to a finite number, falling back when absent/invalid. */
 export function parseQuarterParam(value: string | undefined, fallback: number): number {
   const n = Number(value);
