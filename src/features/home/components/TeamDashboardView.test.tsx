@@ -36,13 +36,13 @@ describe('TeamDashboardView', () => {
     }
   });
 
-  it('renders counts with text labels (not color alone)', () => {
+  it('renders counts as stat tiles labelled for screen readers (not color alone)', () => {
     renderView();
     const rocks = screen.getByRole('region', { name: 'Rocks' });
-    expect(within(rocks).getByText('On track: 2')).toBeInTheDocument();
-    expect(within(rocks).getByText('Off track: 1')).toBeInTheDocument();
+    expect(within(rocks).getByRole('img', { name: 'On track: 2' })).toBeInTheDocument();
+    expect(within(rocks).getByRole('img', { name: 'Off track: 1' })).toBeInTheDocument();
     const todos = screen.getByRole('region', { name: 'Todos' });
-    expect(within(todos).getByText('Overdue: 2')).toBeInTheDocument();
+    expect(within(todos).getByRole('img', { name: 'Overdue: 2' })).toBeInTheDocument();
   });
 
   it('links each card to its team module (INV-8)', () => {
