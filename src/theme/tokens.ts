@@ -68,7 +68,7 @@ export const motion = {
     decelerate: 'cubic-bezier(0, 0, 0, 1)',
     /** Elements leaving the screen (accelerate). */
     accelerate: 'cubic-bezier(0.3, 0, 1, 1)',
-    /** High-emphasis, expressive transitions. */
-    emphasized: 'cubic-bezier(0.2, 0, 0, 1)',
+    /** High-emphasis, expressive transitions (Material 3 emphasized-decelerate). */
+    emphasized: 'cubic-bezier(0.05, 0.7, 0.1, 1)',
   },
 } as const;

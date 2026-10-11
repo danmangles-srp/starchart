@@ -39,15 +39,10 @@ const theme = createTheme({
     ...typeScale,
   },
   transitions: {
-    duration: {
-      shortest: motion.duration.short,
-      shorter: motion.duration.short,
-      short: motion.duration.medium,
-      standard: motion.duration.medium,
-      complex: motion.duration.long,
-      enteringScreen: motion.duration.medium,
-      leavingScreen: motion.duration.short,
-    },
+    // Override easings only — give the whole app a consistent Material 3 feel — but
+    // keep MUI's built-in duration ramp (shortest…complex are deliberately distinct
+    // per component). Purposeful, token-timed transitions live in T8.9 and read the
+    // `motion.duration` tokens directly rather than remapping MUI's global slots.
     easing: {
       easeInOut: motion.easing.standard,
       easeOut: motion.easing.decelerate,
@@ -69,19 +64,17 @@ const theme = createTheme({
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: {
-        root: { borderRadius: radii.pill, paddingInline: 16 },
+        // Softly rounded (md), not full-pill, so wide/full-width buttons don't become
+        // lozenges. Padding from the 8-pt base so it tracks the spacing token.
+        root: ({ theme: t }) => ({ borderRadius: radii.md, paddingInline: t.spacing(2) }),
       },
     },
     MuiCard: {
       defaultProps: { variant: 'outlined' },
       styleOverrides: {
+        // Cards step up to the md radius; other Paper surfaces (Dialog/Menu/Popover/
+        // Drawer/Alert) keep the base shape.borderRadius so the bump is card-scoped.
         root: { borderRadius: radii.md },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        // Flatter, Material-3-style surfaces: lean on hairline borders over heavy shadow.
-        rounded: { borderRadius: radii.md },
       },
     },
     MuiChip: {

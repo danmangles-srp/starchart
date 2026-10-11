@@ -32,9 +32,12 @@ describe('design tokens', () => {
     expect(motion.duration.medium).toBeLessThan(motion.duration.long);
   });
 
-  it('exposes named cubic-bezier easings', () => {
-    for (const e of Object.values(motion.easing)) {
+  it('exposes four distinct named cubic-bezier easings', () => {
+    const easings = Object.values(motion.easing);
+    for (const e of easings) {
       expect(e).toMatch(/^cubic-bezier\(/);
     }
+    // standard vs emphasized must differ — they drive different motion intents (T8.9).
+    expect(new Set(easings).size).toBe(easings.length);
   });
 });
