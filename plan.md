@@ -543,12 +543,12 @@ Each finding → the ticket that closes it. Class: `A` architecture · `D` data 
   `loadTeamDashboards`. **Rewrite INV-5** to this helper. `Gate:` `useOptimisticAction` unit test (apply
   + rollback + retry); all component tests green; a grep proves no `@tanstack` import remains. `ACs:`
   NFR-5.1, NFR-2.2. `Inv:` INV-5 (rewritten), INV-7. `Deps:` — . `Ask:` —
-  `Status:` **partially landed (2026-10-11)** — `lib/query/*` + `@tanstack/react-query` removed,
-  `useOptimisticAction` adopted by `TodosView` + `RocksView`, `MyWeekView`/`TeamDashboardView` → RSC,
-  dead `loadTeamDashboards` removed, INV-5 rewritten; gate green. **Remaining:** migrate `IssuesView`
-  (its solve test asserts the *persisted* optimistic overlay, which `useOptimistic` intentionally drops
-  until the server `refresh` lands — needs a test update to re-render with reconciled props) and drop the
-  Scorecard per-cell `router.refresh()` (U4 — needs a local-rows reconcile so edits survive re-render).
+  `Status:` **mostly landed (2026-10-11)** — `lib/query/*` + `@tanstack/react-query` removed,
+  `useOptimisticAction` adopted by **`TodosView` + `RocksView` + `IssuesView`** (all interactive writes),
+  `MyWeekView`/`TeamDashboardView` → RSC, dead `loadTeamDashboards` removed, INV-5 rewritten; gate green.
+  **Deferred:** U4 (drop the Scorecard per-cell `router.refresh()`). The naive drop leaves the row's
+  13-week summary stale until navigation; the clean fix recomputes the row summary client-side after an
+  edit (a scoped reconcile) — tracked for the perf/UX polish so it doesn't regress the dashboard bar.
 - **T8.3 — Data-model integrity.**
   `Build:` add `orgId` to `WeeklyEntry` (+ `@@index`, backfill from `measurable.orgId`) and set/scope it
   directly in `scorecardRepo`; add `archivedAt` to `Department` + an archive path in `adminRepo` and the
