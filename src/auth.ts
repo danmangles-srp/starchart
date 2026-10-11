@@ -5,11 +5,15 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import type { Adapter, AdapterUser } from 'next-auth/adapters';
 import { db } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { getServerEnv } from '@/lib/env';
 import { parseAllowedDomains, isSignInAllowed, emailDomain } from '@/lib/auth/access';
 import { getOrCreateDefaultOrg } from '@/features/org/data/resolveOrg';
 
-const allowedDomains = parseAllowedDomains(process.env.ALLOWED_EMAIL_DOMAINS);
-const allowedTenantId = process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID || null;
+// Read secrets through the typed, validated accessor (INV-11) rather than raw
+// process.env — the same source the boot hook (src/instrumentation.ts) fails fast on.
+const env = getServerEnv();
+const allowedDomains = parseAllowedDomains(env.ALLOWED_EMAIL_DOMAINS);
+const allowedTenantId = env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID || null;
 
 /**
  * Prisma adapter with a createUser override that stamps the resolved orgId

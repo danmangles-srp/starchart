@@ -6,14 +6,19 @@ import { z } from 'zod';
  * setup.md). Never import this into client code — these are secrets.
  */
 export const serverEnvSchema = z.object({
+  // Always required — the app cannot run correctly without these.
   DATABASE_URL: z.string().url(),
   AUTH_SECRET: z.string().min(1),
-  AUTH_GOOGLE_ID: z.string().min(1),
-  AUTH_GOOGLE_SECRET: z.string().min(1),
-  AUTH_MICROSOFT_ENTRA_ID_ID: z.string().min(1),
-  AUTH_MICROSOFT_ENTRA_ID_SECRET: z.string().min(1),
-  AUTH_MICROSOFT_ENTRA_ID_TENANT_ID: z.string().min(1),
   ALLOWED_EMAIL_DOMAINS: z.string().min(1),
+  // OAuth client credentials are set per-deploy (Vercel) and read by Auth.js directly
+  // from process.env; a provider whose pair is unset is simply unavailable. Optional
+  // here so local dev / CI / `next build` don't require a fully provisioned IdP — the
+  // required vars above still fail the boot fast (T8.1 / INV-11).
+  AUTH_GOOGLE_ID: z.string().optional(),
+  AUTH_GOOGLE_SECRET: z.string().optional(),
+  AUTH_MICROSOFT_ENTRA_ID_ID: z.string().optional(),
+  AUTH_MICROSOFT_ENTRA_ID_SECRET: z.string().optional(),
+  AUTH_MICROSOFT_ENTRA_ID_TENANT_ID: z.string().optional(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 });
 

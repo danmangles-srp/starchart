@@ -29,8 +29,10 @@
    org. Enforcement is centralized (see INV-1/INV-2), never ad-hoc.
 6. **UI = MUI v6 + MUI X**, Material 3 seeded from Google blue `#1a73e8`, light **and** dark (system +
    toggle). DataGrid → Scorecard; Charts → trends; Date Pickers → quarter/week. Dense where it earns it.
-7. **Client data = TanStack Query**, optimistic writes with rollback (INV-5). Server actions own the
-   write; React Query owns perceived latency.
+7. **Client data = server actions + RSC, not a client cache.** Mutations are server actions reconciled
+   by `revalidatePath`; perceived latency comes from a shared React 19 `useOptimistic` helper (INV-5).
+   *(Amended 2026-10-11, M8: the original TanStack Query layer shipped unused and is being removed — see
+   T8.2.)*
 8. **Validation = Zod everywhere** — the *same* schema validates client (RHF) and server.
 9. **Status is never color-alone** — color + icon + label, via one shared primitive (INV-6).
 10. **Archive, don't hard-delete** teams/measurables/issues; sensitive changes hit the activity log.
@@ -64,9 +66,11 @@ on most; all still apply. Each is backed by a skill (`structure` / `ui-ux` / `te
 - **INV-4 — Time.** `lib/time` owns all "now"/quarter/week; `AppClock` is injected; store **UTC**; weeks
   are keyed `(isoYear, isoWeek)`, **Monday start, newest-left** on the grid (FR-4.2); **quarters resolve
   from the org's `QuarterDefinition`s, calendar fallback** (Q1 Jan–Mar).
-- **INV-5 — Optimism, uniform.** Interactive writes use the shared `useOptimisticMutation` helper
-  (snapshot → apply → **rollback + retry on error** → invalidate on settle); **input is never dropped**
-  (NFR-5). Query keys are centralized in `lib/query`.
+- **INV-5 — Optimism, uniform.** Interactive writes go through server actions and use the shared
+  **`useOptimisticAction`** helper (React 19 `useOptimistic` + `useTransition`: snapshot → apply →
+  **rollback + retry on error**), reconciled by `revalidatePath` on the server; **input is never dropped**
+  (NFR-5). *(Amended 2026-10-11, M8/T8.2: replaced the unused TanStack Query `useOptimisticMutation`;
+  Cadence is RSC + server-action based, not client-cache based.)*
 - **INV-6 — Never color-alone.** Status / goal / overdue render through shared `StatusChip` / `GoalCell`
   primitives driven by the theme's `status → {color, icon, label}` map — always color **+ icon + an
   accessible label** (NFR-3.3).
@@ -148,8 +152,10 @@ the PR.** Don't re-ask a resolved decision.
 
 ## Plan of Attack (restart here)
 
-> Status as of **2026-10-06**. M0–M2 complete; M3 in progress (T3.1–T3.4 merged). Execute top-down;
-> one ticket = one PR off `main`.
+> Status as of **2026-10-11**. M0–M7 merged (gate green on `main`); outstanding from v1: T3.7
+> (Google-login config — env/console) and T5.5 (convert-to-Todo/Rock, user-deferred). **M8**
+> (architectural refactor & UX-excellence pass) is planned from a full-codebase review — see below.
+> Execute top-down; one ticket = one PR off `main`.
 
 ### Status board
 
@@ -163,6 +169,7 @@ the PR.** Don't re-ask a resolved decision.
 | M5 Issues (incl. solve → convert) | **IN PROGRESS** |
 | M6 My Week home + Team dashboards | **COMPLETE** |
 | M7 Polish: search, notifications, a11y/perf/responsive | **COMPLETE** (T7.1–T7.4; an in-app notification center was scoped as an Idea, not a v1 ticket) |
+| M8 Architectural refactor & UX-excellence pass | **PLANNED** (2026-10-11, full-codebase review) |
 
 ---
 
@@ -455,6 +462,137 @@ FR-7.
   empty/error polish, and a full `/design-review` pass across all screens to ≥ 4/5. `Gate:` responsive
   component tests at breakpoints; design scorecards in the PR. `ACs:` NFR-7.2, NFR-9.1. `Inv:` INV-6,
   INV-7. `Deps:` M6. `Ask:` —
+
+---
+
+## Milestone 8 — Architectural refactor & UX-excellence pass
+
+**Objective:** pay down the architectural debt and UX gaps found in a full-codebase review
+(**2026-10-11**) — **without adding a fifth module**. Three themes: (1) **collapse the data-update
+architecture** onto the one pattern the app actually uses and delete the dead one; (2) **close
+data-model, correctness, and accessibility gaps** against the ACs; (3) **raise the UI to the
+Google-grade bar** (NFR-9), led by a real design-token system and purposeful motion. Direction
+confirmed with the user 2026-10-11: remove the unused TanStack Query layer; full-pass scope; build the
+missing Company/Individual Rocks views; UX priorities = **design tokens + motion/micro-interactions**.
+
+**Exit:** `sh scripts/gate.sh` = 0; **INV-5 rewritten** and honored by one shared optimistic helper with
+no `@tanstack/*` import left; **every app route renders a loading skeleton**; **`WeeklyEntry` carries
+`orgId`**; **all three Rock levels are reachable**; a denied sign-in shows a plain message; the app bar
+shows the real signed-in user; `/design-review` ≥ 4/5 (light **and** dark) on every changed screen.
+
+### Findings register (what this milestone fixes)
+
+Each finding → the ticket that closes it. Class: `A` architecture · `D` data model · `B` bug/AC gap ·
+`U` UX. Evidence is the file cited; the AC/INV each one offends is named.
+
+- **A1 — Dead client-data layer.** `lib/query/*` (`QueryProvider` mounted in `ThemeRegistry`,
+  `getQueryClient`, `queryKeys`, `useOptimisticMutation`) has **zero feature usage**; INV-5's "one
+  optimistic helper" is contradicted and optimism is re-implemented **three ways** — DataGrid
+  `processRowUpdate` (`ScorecardGrid`), local `useState` + async IIFE (`TodosView`), `useTransition` +
+  `useState` (`RocksView`). → **T8.2**
+- **A2 — Typed env never enforced.** `getServerEnv()` (`lib/env.ts`) is never called; the fail-fast
+  guarantee (NFR-1/NFR-4.2) is dead and `auth.ts` reads `process.env` raw. → **T8.1**
+- **A3 — RSC-first drift.** Purely presentational views (`MyWeekView`, `TeamDashboardView`) are
+  `'use client'` with no interactivity → needless client JS (decision #2); `loadTeamDashboards`
+  (`home/server/assembly.ts`) is dead code. → **T8.2**
+- **D1 — `WeeklyEntry` has no `orgId`.** AC-2.7.1 names "weekly entries" as an org-scoped entity;
+  isolation currently depends on the `measurable` join, not on structure (NFR-1.5). → **T8.3**
+- **D2 — Department can't be retired.** `Department` has no `archivedAt`, so AC-2.5.1's "retire a team
+  **or department**" is only half-possible. → **T8.3**
+- **B1 — Company & Individual Rocks render nowhere.** `listTeamRocks` filters by `teamId`, so
+  `teamId:null` (Company/Individual) rocks are created then vanish; `CreateRockDialog` offers every level
+  to everyone (a non-admin picking Company gets a guaranteed `forbidden`). Breaks FR-3.1 / FR-3.5. →
+  **T8.4**
+- **B2 — Silent sign-in denial.** `(auth)/sign-in/page.tsx` ignores `?error=`, so a user denied by the
+  domain/tenant allowlist sees the normal screen with no explanation (AC-1.1.3). → **T8.5**
+- **B3 — No real identity in the app bar.** `AppShell` hardcodes a `"U"` avatar + "Profile (M1)" tooltip;
+  the signed-in name/image/profile + optional job title (AC-1.3.1, FR-1.3) are never surfaced. → **T8.5**
+- **B4 — Missing loading skeletons.** `loading.tsx` exists only for Rocks; scorecard/issues/todos/search/
+  admin/home/team-dashboard/me have none, so navigation shows a frozen page, not a skeleton (INV-7). →
+  **T8.6**
+- **B5 — Time context is not org-aware.** The app-bar anchor (`AppShell` → `timeAnchor`) is hardcoded to
+  **calendar** quarters, ignoring the org `QuarterDefinition`s that drive the Rocks selector (AC-3.2.4);
+  ISO-week math uses server-local time while quarter math uses UTC; `date-fns-tz` (dependency matrix) is
+  absent, so "store UTC, display in the viewer's timezone" is unimplemented. → **T8.7**
+- **B6 — Thin cell a11y label.** `GoalCell`'s aria-label omits the measurable name + goal threshold that
+  AC-4.3.1 illustrates ("Website leads, week 40: 48, below goal 50"). → **T8.6**
+- **U1 — No design-token system.** `theme.ts` sets only font family + `borderRadius`; the T0.2-promised
+  type/spacing/elevation/**motion** tokens don't exist, so screens lean on MUI defaults (NFR-9.1). →
+  **T8.8**
+- **U2 — Flat states + dashboards.** Empty/error states are text-only (no iconography); the team
+  dashboard and My Week are walls of small chips with no number hierarchy (NFR-9.1). → **T8.10**
+- **U3 — No motion system.** No route/dialog/list/optimistic-feedback transitions and no
+  `prefers-reduced-motion` handling (NFR-9.1, NFR-3.*). → **T8.9**
+- **U4 — Scorecard refetches per cell.** `ScorecardGrid.processRowUpdate` calls `router.refresh()` on
+  every committed cell — a full RSC refetch per edit on a 40×13 grid (NFR-2.2). → **T8.2**
+
+### Tickets
+
+- **T8.1 — Env fail-fast wiring.**
+  `Build:` invoke `getServerEnv()` at server start (Next `instrumentation.ts` `register()`, or a
+  server-only module imported by the root) so a missing/invalid var fails the **boot**, not a later
+  request; route secret reads through the typed accessor (`auth.ts` included); keep `access.ts` pure.
+  `Gate:` boot-validation unit test (missing var throws a readable error) + the existing env-parse test.
+  `ACs:` NFR-1.*, NFR-4.2. `Inv:` INV-11. `Deps:` — . `Ask:` —
+- **T8.2 — One optimistic seam; retire TanStack Query.**
+  `Build:` delete `lib/query/*` and drop `@tanstack/react-query`; add a shared **`useOptimisticAction`**
+  (React 19 `useOptimistic` + `useTransition`: snapshot → apply → rollback + surface retry on error);
+  migrate `TodosView` (done toggle), `RocksView` (status), and the Issues interactions onto it; keep the
+  Scorecard cell on DataGrid's `processRowUpdate` but **drop the per-cell `router.refresh()`** (U4) for a
+  scoped reconcile; convert stateless views (`MyWeekView`, `TeamDashboardView`, …) to RSC; delete dead
+  `loadTeamDashboards`. **Rewrite INV-5** to this helper. `Gate:` `useOptimisticAction` unit test (apply
+  + rollback + retry); all component tests green; a grep proves no `@tanstack` import remains. `ACs:`
+  NFR-5.1, NFR-2.2. `Inv:` INV-5 (rewritten), INV-7. `Deps:` — . `Ask:` —
+- **T8.3 — Data-model integrity.**
+  `Build:` add `orgId` to `WeeklyEntry` (+ `@@index`, backfill from `measurable.orgId`) and set/scope it
+  directly in `scorecardRepo`; add `archivedAt` to `Department` + an archive path in `adminRepo` and the
+  admin console. **One committed migration; reset the drifted local/test DB first** (orphaned
+  `Rock.sourceIssueId` — see the `local-db-drift` memory) so the diff is clean. `Gate:` migration applies
+  on a reset DB; a cross-org `WeeklyEntry` scoping test; a department-archive test. `ACs:` AC-2.7.1,
+  NFR-1.5, AC-2.5.1. `Inv:` INV-2, INV-10, INV-11. `Deps:` — . `Ask:` —
+- **T8.4 — All three Rock levels usable.**
+  `Build:` a personal **My Rocks** view for Individual rocks at `/me/rocks` (add to `routes` + nav + the
+  My Week deep link) and a **Company Rocks** surface on the Leadership board (`level:COMPANY,
+  teamId:null`), each with the four states; **gate the create dialog's level options by permission**
+  (Company → Admin/Leadership, Individual → self, Team → members) so no offered option is a guaranteed
+  `forbidden`. `Gate:` component tests (each level renders + is reachable) + authz tests (level gating).
+  `ACs:` FR-3.1, FR-3.5, AC-3.1.1. `Inv:` INV-6, INV-7, INV-8. `Deps:` T8.2. `Ask:` —
+- **T8.5 — Identity surfacing + sign-in denial.**
+  `Build:` pass the viewer into `AppShell`; replace the placeholder avatar with the real name/image in a
+  profile menu (profile link + job-title edit per FR-1.3; sign-out moves into it); the sign-in page reads
+  `?error=` and renders a plain-language denial (AC-1.1.3). `Gate:` component tests (avatar/menu renders
+  the user; denial message shows for `error=AccessDenied`). `ACs:` AC-1.1.3, AC-1.3.1, FR-1.3. `Inv:`
+  INV-7. `Deps:` — . `Ask:` —
+- **T8.6 — Loading skeletons + cell a11y.**
+  `Build:` a `loading.tsx` per app route (scorecard/issues/todos/search/admin/home/team-dashboard/me),
+  each shaped with `LoadingState`; enrich `GoalCell`'s aria-label with the measurable name + goal value
+  (AC-4.3.1). `Gate:` each route's `loading` renders a skeleton; a `GoalCell` label assertion. `ACs:`
+  INV-7, AC-4.3.1, NFR-3.*. `Inv:` INV-7, INV-6. `Deps:` — . `Ask:` —
+- **T8.7 — Time correctness.**
+  `Build:` the app-bar anchor resolves the current quarter from the org `QuarterDefinition`s (calendar
+  fallback), matching the Rocks selector (AC-3.2.4); add `date-fns-tz` and display stored-UTC instants in
+  the viewer's timezone; make week + quarter math agree on zone. `Gate:` a `timeAnchor`-from-definitions
+  unit test + a tz-display test (a UTC instant renders correctly in a chosen tz). `ACs:` AC-3.2.4, FR-7.3,
+  INV-4. `Inv:` INV-4. `Deps:` — . `Ask:` —
+- **T8.8 — Design-token system.**
+  `Build:` a real Material 3 token layer in `theme.ts` — a type scale (display/headline/title/body/
+  label), an 8-pt spacing rhythm, elevation/surface tones, shape, and **motion tokens** (durations +
+  easings); sensible component defaults (Button/Card/Paper/Chip density + focus) so screens stop
+  hardcoding visual values. `Gate:` token unit tests; `/design-review` ≥ 4/5 light + dark on
+  representative screens. `ACs:` NFR-9.1, FR-8.3, NFR-3.1. `Inv:` INV-6. `Deps:` — . `Ask:` —
+- **T8.9 — Motion & micro-interactions.**
+  `Build:` purposeful transitions from the T8.8 motion tokens (dialog open/close, list add/remove,
+  optimistic save/rollback feedback, status change), hover/press/focus polish, and full
+  `prefers-reduced-motion` support. `Gate:` a reduced-motion test; `/design-review` on motion. `ACs:`
+  NFR-9.1, NFR-3.*. `Inv:` INV-6, INV-7. `Deps:` T8.8. `Ask:` —
+- **T8.10 — States + dashboard polish.**
+  `Build:` calmer, iconographic empty/error states; replace the dashboard chip-walls with **stat tiles**
+  (number + label + semantic colour + icon — never colour alone) and give My Week a clearer hierarchy +
+  consistent panel links. `Gate:` component tests (states + tiles + a11y labels); `/design-review` ≥ 4/5.
+  `ACs:` NFR-9.1, FR-7.1, FR-7.2, NFR-3.3. `Inv:` INV-6, INV-7. `Deps:` T8.8. `Ask:` —
+
+**Order:** T8.1 → T8.2 → T8.3 (independent core), then T8.4 / T8.5 / T8.6 / T8.7 (gap fixes,
+parallel-safe), then T8.8 → T8.9 / T8.10 (UX, token-dependent). Each ticket = one PR off `main`.
 
 ---
 
