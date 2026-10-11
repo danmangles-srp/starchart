@@ -13,6 +13,13 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // The default 5s test timeout is too tight for userEvent-driven component tests
+    // when the whole suite runs under v8 coverage instrumentation (the slowest path,
+    // and the one the gate uses) — several otherwise-passing tests time out purely
+    // from CPU contention. Give them headroom so the gate is deterministic; the DB
+    // round-trip setup (beforeAll) gets a larger hook budget for the same reason.
+    testTimeout: 20000,
+    hookTimeout: 30000,
     coverage: {
       provider: 'v8',
       // The logic surface (structure.md): pure domain/data/server + lib. Components
