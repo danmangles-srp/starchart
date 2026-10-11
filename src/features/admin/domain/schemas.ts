@@ -12,6 +12,7 @@ export const RenameTeamSchema = z.object({
 });
 export const ArchiveTeamSchema = z.object({ teamId: z.string().min(1) });
 export const CreateDepartmentSchema = z.object({ name: z.string().trim().min(1).max(80) });
+export const ArchiveDepartmentSchema = z.object({ departmentId: z.string().min(1) });
 
 export const AddMembershipSchema = z.object({
   userId: z.string().min(1),

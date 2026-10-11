@@ -197,7 +197,7 @@ export async function upsertWeeklyEntry(
   await prisma.weeklyEntry.upsert({
     where: { measurableId_isoYear_isoWeek: { measurableId, isoYear, isoWeek } },
     update: { value },
-    create: { measurableId, isoYear, isoWeek, value },
+    create: { orgId, measurableId, isoYear, isoWeek, value },
   });
   return measurable.teamId;
 }
@@ -211,8 +211,11 @@ export async function getWeeklyEntries(
 ): Promise<EntryRow[]> {
   if (weeks.length === 0) return [];
   const rows = await prisma.weeklyEntry.findMany({
+    // Scoped by WeeklyEntry.orgId directly (AC-2.7.1 / NFR-1.5) and by team via the
+    // measurable — cross-org isolation is now structural, not join-derived.
     where: {
-      measurable: { orgId, teamId },
+      orgId,
+      measurable: { teamId },
       OR: weeks.map((w) => ({ isoYear: w.isoYear, isoWeek: w.isoWeek })),
     },
     select: { measurableId: true, isoYear: true, isoWeek: true, value: true },

@@ -21,6 +21,7 @@ import type { ActionResult } from '@/lib/auth/errors';
 import {
   createTeamAction,
   archiveTeamAction,
+  archiveDepartmentAction,
   addMembershipAction,
   removeMembershipAction,
   setUserAdminAction,
@@ -95,6 +96,21 @@ export default function AdminConsole({ data }: { data: AdminData }) {
             message:
               'The team is hidden everywhere but its history is kept. This can be reversed by an admin.',
             run: () => archiveTeamAction({ teamId: team.id }),
+          })
+        }
+      />
+
+      <Divider />
+
+      <DepartmentsSection
+        departments={data.departments}
+        pending={pending}
+        onArchive={(dept) =>
+          setConfirm({
+            title: `Archive ${dept.name}?`,
+            message:
+              'Retiring a department hides it from team setup; move or archive its teams first. This can be reversed by an admin.',
+            run: () => archiveDepartmentAction({ departmentId: dept.id }),
           })
         }
       />
@@ -213,13 +229,59 @@ function TeamsSection({
             {team.isLeadership ? (
               <Chip size="small" label="Leadership" />
             ) : (
-              <Button size="small" color="error" disabled={pending} onClick={() => onArchive(team)}>
+              <Button
+                size="small"
+                color="error"
+                disabled={pending}
+                aria-label={`Archive ${team.name}`}
+                onClick={() => onArchive(team)}
+              >
                 Archive
               </Button>
             )}
           </Stack>
         ))}
       </Stack>
+    </section>
+  );
+}
+
+function DepartmentsSection({
+  departments,
+  pending,
+  onArchive,
+}: {
+  departments: AdminData['departments'];
+  pending: boolean;
+  onArchive: (dept: AdminData['departments'][number]) => void;
+}) {
+  return (
+    <section>
+      <Typography variant="h6" gutterBottom>
+        Departments
+      </Typography>
+      {departments.length === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          No departments yet.
+        </Typography>
+      ) : (
+        <Stack spacing={0.5}>
+          {departments.map((dept) => (
+            <Stack key={dept.id} direction="row" alignItems="center" justifyContent="space-between">
+              <Typography>{dept.name}</Typography>
+              <Button
+                size="small"
+                color="error"
+                disabled={pending}
+                aria-label={`Archive ${dept.name}`}
+                onClick={() => onArchive(dept)}
+              >
+                Archive
+              </Button>
+            </Stack>
+          ))}
+        </Stack>
+      )}
     </section>
   );
 }

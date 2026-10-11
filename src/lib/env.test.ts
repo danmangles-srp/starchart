@@ -28,4 +28,20 @@ describe('parseServerEnv', () => {
   it('throws on an invalid DATABASE_URL', () => {
     expect(() => parseServerEnv({ ...valid, DATABASE_URL: 'not-a-url' })).toThrow(/DATABASE_URL/);
   });
+
+  it('accepts an environment without OAuth client credentials (they are deploy-set)', () => {
+    const rest: Record<string, string | undefined> = { ...valid };
+    delete rest.AUTH_GOOGLE_ID;
+    delete rest.AUTH_GOOGLE_SECRET;
+    delete rest.AUTH_MICROSOFT_ENTRA_ID_ID;
+    delete rest.AUTH_MICROSOFT_ENTRA_ID_SECRET;
+    delete rest.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID;
+    expect(() => parseServerEnv(rest)).not.toThrow();
+  });
+
+  it('throws when a required identity var is missing', () => {
+    const rest: Record<string, string | undefined> = { ...valid };
+    delete rest.ALLOWED_EMAIL_DOMAINS;
+    expect(() => parseServerEnv(rest)).toThrow(/ALLOWED_EMAIL_DOMAINS/);
+  });
 });

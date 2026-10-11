@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from '@/lib/auth/errors';
 import {
   createDepartment,
+  archiveDepartment,
   createTeam,
   renameTeam,
   archiveTeam,
@@ -63,6 +64,19 @@ describe.skipIf(!testUrl)('adminRepo (Tier 2.5)', () => {
     await expect(renameTeam('other-org', team.id, 'nope', prisma)).rejects.toBeInstanceOf(
       NotFoundError,
     );
+  });
+
+  it('archives an empty department but refuses one with active teams (AC-2.5.1)', async () => {
+    if (!prisma) return;
+    const empty = await createDepartment(orgId, `Empty ${Date.now()}`, prisma);
+    await archiveDepartment(orgId, empty.id, prisma);
+    expect(
+      (await prisma.department.findUniqueOrThrow({ where: { id: empty.id } })).archivedAt,
+    ).not.toBeNull();
+
+    const full = await createDepartment(orgId, `Full ${Date.now()}`, prisma);
+    await createTeam(orgId, { name: `Dept team ${Date.now()}`, departmentId: full.id }, prisma);
+    await expect(archiveDepartment(orgId, full.id, prisma)).rejects.toThrow(/teams/i);
   });
 
   it('adds, re-roles, and removes a membership', async () => {

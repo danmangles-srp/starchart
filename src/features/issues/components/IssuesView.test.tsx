@@ -134,9 +134,10 @@ describe('IssuesView', () => {
     expect(h.refresh).toHaveBeenCalled();
   });
 
-  it('solves an issue with a resolution note (optimistic, moves to Solved)', async () => {
+  it('solves an issue with a resolution note, then shows it under Solved after refresh', async () => {
     const user = userEvent.setup();
-    renderView([issue('Slow site', 'SHORT')]);
+    const slow = issue('Slow site', 'SHORT');
+    const { rerender } = renderView([slow]);
     await user.click(screen.getByLabelText(/solve slow site/i));
     await user.type(screen.getByLabelText(/resolution note/i), 'Upgraded host');
     await user.click(screen.getByRole('button', { name: /mark solved/i }));
@@ -146,7 +147,25 @@ describe('IssuesView', () => {
         resolutionNote: 'Upgraded host',
       }),
     );
-    // optimistically appears under Solved
+    // The optimistic overlay is transient; router.refresh() reconciles in prod.
+    // Re-render with the reconciled server truth and assert it lands under Solved.
+    rerender(
+      <ThemeProvider theme={theme}>
+        <IssuesView
+          teamId="mk1"
+          issues={[
+            {
+              ...slow,
+              solved: true,
+              solvedAt: '2026-10-11T00:00:00.000Z',
+              resolutionNote: 'Upgraded host',
+            },
+          ]}
+          members={members}
+          canEdit
+        />
+      </ThemeProvider>,
+    );
     const solvedSection = await screen.findByRole('region', { name: 'Solved' });
     expect(within(solvedSection).getByText('Slow site')).toBeInTheDocument();
   });

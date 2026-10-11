@@ -1,5 +1,3 @@
-'use client';
-
 import type { ReactNode } from 'react';
 import NextLink from 'next/link';
 import Box from '@mui/material/Box';

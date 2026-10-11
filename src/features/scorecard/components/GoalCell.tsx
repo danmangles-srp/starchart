@@ -9,7 +9,17 @@ import { GOAL_STATUS_META } from './goalStatusMeta';
  * a text label for assistive tech — never color alone (INV-6 / NFR-3.3).
  * Empty is neutral (muted em dash), distinct from a real 0.
  */
-export default function GoalCell({ cell, week }: { cell: ScorecardCell; week: WeekColumn }) {
+export default function GoalCell({
+  cell,
+  week,
+  measurableName,
+  goalLabel,
+}: {
+  cell: ScorecardCell;
+  week: WeekColumn;
+  measurableName: string;
+  goalLabel: string;
+}) {
   const meta = GOAL_STATUS_META[cell.status] ?? GOAL_STATUS_META.empty;
   const Icon = meta.icon;
   const isColored = meta.color !== 'default';
@@ -18,7 +28,7 @@ export default function GoalCell({ cell, week }: { cell: ScorecardCell; week: We
 
   return (
     <Box
-      aria-label={`Week ${week.isoWeek}: ${cell.display}, ${meta.label}`}
+      aria-label={`${measurableName}, week ${week.isoWeek}: ${cell.display}, ${meta.label} (goal ${goalLabel})`}
       sx={{
         display: 'flex',
         alignItems: 'center',

@@ -33,6 +33,7 @@ model Organization {
   quarterDefinitions QuarterDefinition[]
   rocks              Rock[]
   measurables        Measurable[]
+  weeklyEntries      WeeklyEntry[]
   todos              Todo[]
   issues             Issue[]
 }
@@ -112,17 +113,19 @@ model VerificationToken {
 
 /// A grouping/filter over teams. Not its own module workspace.
 model Department {
-  id        String   @id @default(cuid())
-  orgId     String
-  name      String
-  order     Int      @default(0)
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  orgId      String
+  name       String
+  order      Int       @default(0)
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   org   Organization @relation(fields: [orgId], references: [id])
   teams Team[]
 
   @@unique([orgId, name])
   @@index([orgId])
+  @@index([archivedAt])
 }
 
 /// A team workspace running all four modules. Leadership has no department.
@@ -326,6 +329,7 @@ model Measurable {
 /// A single week's value for a measurable, keyed by ISO (year, week). value null = empty (not 0).
 model WeeklyEntry {
   id           String   @id @default(cuid())
+  orgId        String
   measurableId String
   isoYear      Int
   isoWeek      Int
@@ -333,10 +337,12 @@ model WeeklyEntry {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  measurable Measurable @relation(fields: [measurableId], references: [id], onDelete: Cascade)
+  org        Organization @relation(fields: [orgId], references: [id])
+  measurable Measurable   @relation(fields: [measurableId], references: [id], onDelete: Cascade)
 
   @@unique([measurableId, isoYear, isoWeek])
   @@index([measurableId])
+  @@index([orgId])
 }
 
 // --- Issues (M5) ---

@@ -92,6 +92,24 @@ export const createDepartmentAction = authorizedAction({
     }),
 });
 
+export const archiveDepartmentAction = authorizedAction({
+  schema: S.ArchiveDepartmentSchema,
+  authorize: onlyAdmin,
+  handler: async ({ viewer, input }) => {
+    await repo.archiveDepartment(viewer.orgId, input.departmentId);
+    revalidateOrg();
+    return { departmentId: input.departmentId };
+  },
+  audit: ({ viewer, input }) =>
+    logActivity({
+      orgId: viewer.orgId,
+      actorId: viewer.id,
+      action: ACTIVITY_ACTIONS.DEPARTMENT_ARCHIVED,
+      targetType: 'department',
+      targetId: input.departmentId,
+    }),
+});
+
 export const addMembershipAction = authorizedAction({
   schema: S.AddMembershipSchema,
   authorize: onlyAdmin,

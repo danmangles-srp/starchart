@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useOptimisticAction } from '@/lib/optimistic/useOptimisticAction';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -67,37 +68,25 @@ export default function TodosView({
   const [editing, setEditing] = useState<TodoRow | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  // Local copy for optimistic done-toggles (INV-5), re-seeded from the server
-  // after each refresh via a render-time resync (not an effect).
-  const [items, setItems] = useState(todos);
-  const [prevTodos, setPrevTodos] = useState(todos);
-  if (todos !== prevTodos) {
-    setPrevTodos(todos);
-    setItems(todos);
-  }
+  // One optimistic seam (INV-5): base is the server prop; done-toggles apply instantly
+  // and roll back automatically if the write fails.
+  const { state: items, run } = useOptimisticAction(todos);
 
   const open = useMemo(() => items.filter((t) => !t.done), [items]);
   const done = useMemo(() => items.filter((t) => t.done), [items]);
 
   function toggleDone(todo: TodoRow, next: boolean) {
     setError(null);
-    const previous = items;
-    setItems((cur) =>
-      cur.map((t) =>
-        t.id === todo.id
-          ? { ...t, done: next, completedAt: next ? new Date().toISOString() : null }
-          : t,
-      ),
+    run(
+      (cur) =>
+        cur.map((t) =>
+          t.id === todo.id
+            ? { ...t, done: next, completedAt: next ? new Date().toISOString() : null }
+            : t,
+        ),
+      () => setTodoDoneAction({ todoId: todo.id, done: next }),
+      (message) => setError(message ?? 'Could not update the todo.'),
     );
-    void (async () => {
-      const res = await setTodoDoneAction({ todoId: todo.id, done: next });
-      if (!res.ok) {
-        setItems(previous); // rollback
-        setError(res.message ?? 'Could not update the todo.');
-        return;
-      }
-      router.refresh();
-    })();
   }
 
   const defaults = useMemo<FormValues>(

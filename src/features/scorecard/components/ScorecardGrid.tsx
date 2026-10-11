@@ -132,7 +132,14 @@ export default function ScorecardGrid({ vm }: { vm: ScorecardVM }) {
       renderCell: (params) => {
         const cell = params.row.cellsByWeek[week.key];
         if (!cell) return null;
-        return <GoalCell cell={cell} week={week} />;
+        return (
+          <GoalCell
+            cell={cell}
+            week={week}
+            measurableName={params.row.name}
+            goalLabel={params.row.goalLabel}
+          />
+        );
       },
     }));
 

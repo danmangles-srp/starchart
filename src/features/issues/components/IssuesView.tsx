@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useOptimisticAction } from '@/lib/optimistic/useOptimisticAction';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -83,13 +84,9 @@ export default function IssuesView({
   const [error, setError] = useState<string | null>(null);
   const [dialogFor, setDialogFor] = useState<IssueListType | null>(null);
 
-  // Local copy for optimistic reorder/move (INV-5); re-seeded from the server on refresh.
-  const [items, setItems] = useState(issues);
-  const [prev, setPrev] = useState(issues);
-  if (issues !== prev) {
-    setPrev(issues);
-    setItems(issues);
-  }
+  // One optimistic seam (INV-5): base is the server prop; reorder/move/solve/reopen
+  // apply instantly and roll back automatically on failure.
+  const { state: items, run } = useOptimisticAction(issues);
 
   const short = useMemo(() => openInList(items, 'SHORT'), [items]);
   const long = useMemo(() => openInList(items, 'LONG'), [items]);
@@ -139,79 +136,51 @@ export default function IssuesView({
   });
 
   function reorder(listType: IssueListType, orderedIds: string[]) {
-    const previous = items;
-    const rankOf = new Map(orderedIds.map((id, i) => [id, i + 1]));
-    setItems((cur) => cur.map((i) => (rankOf.has(i.id) ? { ...i, rank: rankOf.get(i.id)! } : i)));
     setError(null);
-    void (async () => {
-      const res = await reorderIssuesAction({ teamId, listType, orderedIds });
-      if (!res.ok) {
-        setItems(previous);
-        setError(res.message ?? 'Could not save the new order.');
-        return;
-      }
-      router.refresh();
-    })();
+    const rankOf = new Map(orderedIds.map((id, i) => [id, i + 1]));
+    run(
+      (cur) => cur.map((i) => (rankOf.has(i.id) ? { ...i, rank: rankOf.get(i.id)! } : i)),
+      () => reorderIssuesAction({ teamId, listType, orderedIds }),
+      (message) => setError(message ?? 'Could not save the new order.'),
+    );
   }
 
   function move(issue: IssueRow, to: IssueListType) {
-    const previous = items;
-    const nextRank = openInList(items, to).length + 1;
-    setItems((cur) =>
-      cur.map((i) => (i.id === issue.id ? { ...i, listType: to, rank: nextRank } : i)),
-    );
     setError(null);
-    void (async () => {
-      const res = await moveIssueAction({ issueId: issue.id, toListType: to });
-      if (!res.ok) {
-        setItems(previous);
-        setError(res.message ?? 'Could not move the issue.');
-        return;
-      }
-      router.refresh();
-    })();
+    const nextRank = openInList(items, to).length + 1;
+    run(
+      (cur) => cur.map((i) => (i.id === issue.id ? { ...i, listType: to, rank: nextRank } : i)),
+      () => moveIssueAction({ issueId: issue.id, toListType: to }),
+      (message) => setError(message ?? 'Could not move the issue.'),
+    );
   }
 
   function solve(issue: IssueRow, resolutionNote: string | null) {
-    const previous = items;
-    const nowIso = new Date().toISOString();
-    setItems((cur) =>
-      cur.map((i) =>
-        i.id === issue.id ? { ...i, solved: true, solvedAt: nowIso, resolutionNote } : i,
-      ),
-    );
-    setSolveFor(null);
     setError(null);
-    void (async () => {
-      const res = await solveIssueAction({ issueId: issue.id, resolutionNote });
-      if (!res.ok) {
-        setItems(previous);
-        setError(res.message ?? 'Could not solve the issue.');
-        return;
-      }
-      router.refresh();
-    })();
+    const nowIso = new Date().toISOString();
+    setSolveFor(null);
+    run(
+      (cur) =>
+        cur.map((i) =>
+          i.id === issue.id ? { ...i, solved: true, solvedAt: nowIso, resolutionNote } : i,
+        ),
+      () => solveIssueAction({ issueId: issue.id, resolutionNote }),
+      (message) => setError(message ?? 'Could not solve the issue.'),
+    );
   }
 
   function reopen(issue: IssueRow) {
-    const previous = items;
-    setItems((cur) =>
-      cur.map((i) =>
-        i.id === issue.id
-          ? { ...i, solved: false, solvedAt: null, solvedById: null, resolutionNote: null }
-          : i,
-      ),
-    );
     setError(null);
-    void (async () => {
-      const res = await reopenIssueAction({ issueId: issue.id });
-      if (!res.ok) {
-        setItems(previous);
-        setError(res.message ?? 'Could not reopen the issue.');
-        return;
-      }
-      router.refresh();
-    })();
+    run(
+      (cur) =>
+        cur.map((i) =>
+          i.id === issue.id
+            ? { ...i, solved: false, solvedAt: null, solvedById: null, resolutionNote: null }
+            : i,
+        ),
+      () => reopenIssueAction({ issueId: issue.id }),
+      (message) => setError(message ?? 'Could not reopen the issue.'),
+    );
   }
 
   const empty = short.length === 0 && long.length === 0 && solved.length === 0;

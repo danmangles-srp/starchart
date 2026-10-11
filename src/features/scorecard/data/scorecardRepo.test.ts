@@ -94,6 +94,20 @@ describe.skipIf(!testUrl)('scorecardRepo (Tier 2.5)', () => {
     );
   });
 
+  it('stamps orgId on a weekly entry so org scoping is structural (AC-2.7.1)', async () => {
+    if (!prisma) return;
+    const m = await createMeasurable(
+      orgId,
+      { teamId, name: 'Signups', ownerId: userId, goalValue: 10, comparator: 'GTE' },
+      prisma,
+    );
+    await upsertWeeklyEntry(orgId, m.id, 2026, 44, 12, prisma);
+    const row = await prisma.weeklyEntry.findFirstOrThrow({
+      where: { measurableId: m.id, isoYear: 2026, isoWeek: 44 },
+    });
+    expect(row.orgId).toBe(orgId);
+  });
+
   it('rolls up a user’s off-goal measurables and a team summary by latest week (INV-9)', async () => {
     if (!prisma) return;
     const now = new Date();

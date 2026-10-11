@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useOptimisticAction } from '@/lib/optimistic/useOptimisticAction';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -67,22 +68,14 @@ export default function RocksView({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [items, setItems] = useState(rocks);
-  const [prevRocks, setPrevRocks] = useState(rocks);
+  // One optimistic seam (INV-5): base is the server prop (re-fetched on a quarter
+  // change); a status change applies instantly and rolls back on failure.
+  const { state: items, run, isPending } = useOptimisticAction(rocks);
   const [owner, setOwner] = useState('all');
   const [status, setStatus] = useState('all');
   const [level, setLevel] = useState('all');
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [savingId, setSavingId] = useState<string | null>(null);
-  const [, startTransition] = useTransition();
-
-  // Resync when the server sends a new set (quarter change / refresh) — render-time
-  // reset rather than an effect (no cascading-render lint, React-recommended pattern).
-  if (rocks !== prevRocks) {
-    setPrevRocks(rocks);
-    setItems(rocks);
-  }
 
   const owners = useMemo(() => {
     const map = new Map<string, string>();
@@ -109,18 +102,12 @@ export default function RocksView({
 
   // Optimistic status change with rollback (NFR-5.1).
   const changeStatus = (rockId: string, next: RockStatus) => {
-    const previous = items;
     setError(null);
-    setSavingId(rockId);
-    setItems((cur) => cur.map((r) => (r.id === rockId ? { ...r, status: next } : r)));
-    startTransition(async () => {
-      const result = await updateRockStatusAction({ rockId, status: next });
-      if (!result.ok) {
-        setItems(previous);
-        setError(result.message);
-      }
-      setSavingId(null);
-    });
+    run(
+      (cur) => cur.map((r) => (r.id === rockId ? { ...r, status: next } : r)),
+      () => updateRockStatusAction({ rockId, status: next }),
+      (message) => setError(message),
+    );
   };
 
   return (
@@ -217,7 +204,7 @@ export default function RocksView({
             <RockCard
               key={rock.id}
               rock={rock}
-              disabled={savingId === rock.id}
+              disabled={isPending}
               onStatusChange={(next) => changeStatus(rock.id, next)}
             />
           ))}

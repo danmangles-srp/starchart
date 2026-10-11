@@ -7,6 +7,7 @@ import theme from '@/theme/theme';
 const h = vi.hoisted(() => ({
   createTeamAction: vi.fn(async () => ({ ok: true, data: { id: 't9', name: 'Growth' } })),
   archiveTeamAction: vi.fn(async () => ({ ok: true, data: {} })),
+  archiveDepartmentAction: vi.fn(async () => ({ ok: true, data: {} })),
   addMembershipAction: vi.fn(async () => ({ ok: true, data: {} })),
   removeMembershipAction: vi.fn(async () => ({ ok: true, data: {} })),
   setUserAdminAction: vi.fn(async () => ({ ok: true, data: {} })),
@@ -17,6 +18,7 @@ const h = vi.hoisted(() => ({
 vi.mock('@/features/admin/server/actions', () => ({
   createTeamAction: h.createTeamAction,
   archiveTeamAction: h.archiveTeamAction,
+  archiveDepartmentAction: h.archiveDepartmentAction,
   addMembershipAction: h.addMembershipAction,
   removeMembershipAction: h.removeMembershipAction,
   setUserAdminAction: h.setUserAdminAction,
@@ -95,9 +97,18 @@ describe('AdminConsole', () => {
 
   it('confirms before archiving a team', async () => {
     renderConsole();
-    await userEvent.click(screen.getByRole('button', { name: 'Archive' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Archive Marketing Team 1' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
     await waitFor(() => expect(h.archiveTeamAction).toHaveBeenCalledWith({ teamId: 'mk1' }));
+  });
+
+  it('confirms before archiving a department', async () => {
+    renderConsole();
+    await userEvent.click(screen.getByRole('button', { name: 'Archive Marketing' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
+    await waitFor(() =>
+      expect(h.archiveDepartmentAction).toHaveBeenCalledWith({ departmentId: 'd1' }),
+    );
   });
 
   it('toggles a user to admin', async () => {
