@@ -68,6 +68,27 @@ describe('AppShell', () => {
     expect(screen.getByRole('button', { name: /Account: Ada Lovelace/ })).toBeInTheDocument();
   });
 
+  it('renders a server-resolved org quarter anchor when supplied (AC-3.2.4)', () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <AppShell
+          teams={[]}
+          timeAnchor={{
+            fiscalYear: 2027,
+            quarterIndex: 1,
+            quarterLabel: 'FY27 Q1',
+            isoYear: 2026,
+            isoWeek: 20,
+            isoWeekLabel: 'W20',
+          }}
+        >
+          <div>Main content</div>
+        </AppShell>
+      </ThemeProvider>,
+    );
+    expect(screen.getByText('FY27 Q1 · W20')).toBeInTheDocument();
+  });
+
   it('shows the shared time anchor (current quarter + ISO week)', () => {
     renderShell();
     // label like "Q3 2026 · W40" — assert the quarter/week shape is present

@@ -22,7 +22,7 @@ import Tooltip from '@mui/material/Tooltip';
 import CalendarTodayIcon from '@mui/icons-material/CalendarTodayOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import InputBase from '@mui/material/InputBase';
-import { systemClock, timeAnchor } from '@/lib/time';
+import { systemClock, timeAnchor, type TimeAnchor } from '@/lib/time';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/HomeOutlined';
 import FlagIcon from '@mui/icons-material/FlagOutlined';
@@ -80,8 +80,10 @@ function SearchBox({ onSubmit }: { onSubmit: (q: string) => void }) {
  * so Rocks (quarter) and Scorecard/Todos (week) read against one consistent context.
  * Historical browsing stays in-module (the Rocks quarter selector, the Scorecard pager).
  */
-function TimeAnchorChip() {
-  const a = timeAnchor(systemClock.now());
+function TimeAnchorChip({ anchor }: { anchor?: TimeAnchor }) {
+  // Prefer the server-resolved anchor (org quarter definitions, AC-3.2.4); fall back
+  // to a client-computed calendar anchor when none is supplied.
+  const a = anchor ?? timeAnchor(systemClock.now());
   return (
     <Tooltip title="Current quarter and week">
       <Chip
@@ -115,10 +117,12 @@ export default function AppShell({
   children,
   teams = [],
   viewer,
+  timeAnchor: anchor,
 }: {
   children: ReactNode;
   teams?: TeamSummaryRow[];
   viewer?: ViewerIdentity;
+  timeAnchor?: TimeAnchor;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
@@ -269,7 +273,7 @@ export default function AppShell({
             <SearchIcon />
           </IconButton>
           <SearchBox onSubmit={(q) => router.push(`/search?q=${encodeURIComponent(q)}`)} />
-          <TimeAnchorChip />
+          <TimeAnchorChip anchor={anchor} />
           <ThemeToggle />
           {viewer ? (
             <ProfileMenu identity={viewer} />
