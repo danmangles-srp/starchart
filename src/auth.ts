@@ -47,8 +47,18 @@ export const authConfig: NextAuthConfig = {
   // default Auth.js error page.
   pages: { signIn: '/sign-in', error: '/sign-in' },
   providers: [
-    Google({ allowDangerousEmailAccountLinking: true }),
+    // Read the client pair from the typed env explicitly (INV-11) rather than relying
+    // on Auth.js's implicit AUTH_GOOGLE_ID/SECRET inference — makes the wiring obvious
+    // and keeps a single source of truth for secrets. An unset pair leaves the provider
+    // unconfigured (its button simply fails), never a boot crash.
+    Google({
+      clientId: env.AUTH_GOOGLE_ID,
+      clientSecret: env.AUTH_GOOGLE_SECRET,
+      allowDangerousEmailAccountLinking: true,
+    }),
     MicrosoftEntraID({
+      clientId: env.AUTH_MICROSOFT_ENTRA_ID_ID,
+      clientSecret: env.AUTH_MICROSOFT_ENTRA_ID_SECRET,
       allowDangerousEmailAccountLinking: true,
       issuer: allowedTenantId
         ? `https://login.microsoftonline.com/${allowedTenantId}/v2.0`
@@ -61,15 +71,17 @@ export const authConfig: NextAuthConfig = {
       const email = user.email ?? (typeof profile?.email === 'string' ? profile.email : null);
       const rawTid = (profile as { tid?: unknown } | undefined)?.tid;
       const tenantId = typeof rawTid === 'string' ? rawTid : null;
+      const provider = account?.provider ?? 'unknown';
+      const domain = email ? emailDomain(email) : null;
+      // Debug surface (T3.7): an AUTH-tagged line on every OAuth callback so a failed
+      // sign-in is diagnosable from logs (never logs the email itself, only its domain).
+      logger('AUTH').info({ provider, domain }, 'sign-in callback');
       const allowed = isSignInAllowed(
-        { email, provider: account?.provider ?? 'unknown', tenantId },
+        { email, provider, tenantId },
         { allowedDomains, allowedTenantId },
       );
       if (!allowed) {
-        logger('AUTH').warn(
-          { provider: account?.provider, domain: email ? emailDomain(email) : null },
-          'sign-in denied by policy',
-        );
+        logger('AUTH').warn({ provider, domain }, 'sign-in denied by policy');
       }
       return allowed;
     },
