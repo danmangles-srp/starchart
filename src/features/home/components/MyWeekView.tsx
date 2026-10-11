@@ -121,15 +121,22 @@ export default function MyWeekView({ data }: { data: MyWeekData }) {
               alignItems="center"
               gap={1}
             >
-              <Link
-                component={NextLink}
-                href={r.teamId ? `/t/${r.teamId}/rocks` : '/me/rocks'}
-                variant="body2"
-                underline="hover"
-                noWrap
-              >
-                {r.title}
-              </Link>
+              {r.teamId || r.level === 'INDIVIDUAL' ? (
+                <Link
+                  component={NextLink}
+                  href={r.teamId ? `/t/${r.teamId}/rocks` : '/me/rocks'}
+                  variant="body2"
+                  underline="hover"
+                  noWrap
+                >
+                  {r.title}
+                </Link>
+              ) : (
+                // A teamless COMPANY rock has no personal destination — render plain.
+                <Typography variant="body2" noWrap>
+                  {r.title}
+                </Typography>
+              )}
               <StatusChip status={r.status} />
             </Stack>
           ))}

@@ -56,3 +56,9 @@ export function listQuarters(defs: QuarterDef[], now: Date): QuarterOption[] {
 export function quarterKeyEquals(a: QuarterKey, b: QuarterKey): boolean {
   return a.fiscalYear === b.fiscalYear && a.quarterIndex === b.quarterIndex;
 }
+
+/** Parse an `fy`/`q` search-param to a finite number, falling back when absent/invalid. */
+export function parseQuarterParam(value: string | undefined, fallback: number): number {
+  const n = Number(value);
+  return value && Number.isFinite(n) ? n : fallback;
+}

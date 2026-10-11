@@ -20,6 +20,7 @@ import type { QuarterOption, QuarterKey } from '../domain/quarter';
 import { updateRockStatusAction } from '../server/actions';
 import RockCard from './RockCard';
 import CreateRockDialog from './CreateRockDialog';
+import QuarterSelect from './QuarterSelect';
 
 const LEVELS: RockLevel[] = ['COMPANY', 'TEAM', 'INDIVIDUAL'];
 
@@ -101,11 +102,6 @@ export default function RocksView({
       (level === 'all' || r.level === level),
   );
 
-  const selectedValue = `${selected.fiscalYear}-${selected.quarterIndex}`;
-  const hasSelected = quarterOptions.some(
-    (o) => `${o.fiscalYear}-${o.quarterIndex}` === selectedValue,
-  );
-
   const changeQuarter = (value: string) => {
     const [fy, q] = value.split('-');
     router.push(`${pathname}?fy=${fy}&q=${q}`);
@@ -143,29 +139,11 @@ export default function RocksView({
           Rocks
         </Typography>
         <Stack direction="row" gap={1} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="quarter-label">Quarter</InputLabel>
-            <Select
-              labelId="quarter-label"
-              label="Quarter"
-              value={selectedValue}
-              onChange={(e) => changeQuarter(e.target.value)}
-            >
-              {!hasSelected ? (
-                <MenuItem
-                  value={selectedValue}
-                >{`Q${selected.quarterIndex} ${selected.fiscalYear}`}</MenuItem>
-              ) : null}
-              {quarterOptions.map((o) => (
-                <MenuItem
-                  key={`${o.fiscalYear}-${o.quarterIndex}`}
-                  value={`${o.fiscalYear}-${o.quarterIndex}`}
-                >
-                  {o.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <QuarterSelect
+            quarterOptions={quarterOptions}
+            selected={selected}
+            onChange={changeQuarter}
+          />
           {allowedLevels.length > 0 ? (
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
               Add Rock
@@ -188,7 +166,11 @@ export default function RocksView({
           {company.length === 0 ? (
             <EmptyState
               title="No Company Rocks yet"
-              description="Company Rocks set the org-wide priorities for the quarter. Add one from here."
+              description={
+                canEditCompany
+                  ? 'Company Rocks set the org-wide priorities for the quarter. Add one from here.'
+                  : 'Company Rocks set the org-wide priorities for the quarter. An admin adds them here.'
+              }
             />
           ) : (
             <Stack spacing={1.5}>
@@ -204,10 +186,13 @@ export default function RocksView({
               ))}
             </Stack>
           )}
-          <Typography variant="h6" component="h2" sx={{ mt: 3, mb: 1 }}>
-            Team Rocks
-          </Typography>
         </Box>
+      ) : null}
+
+      {companyRocks !== undefined ? (
+        <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+          Team Rocks
+        </Typography>
       ) : null}
 
       <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }}>

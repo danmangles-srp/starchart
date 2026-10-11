@@ -8,10 +8,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import AddIcon from '@mui/icons-material/Add';
 import EmptyState from '@/components/states/EmptyState';
 import type { RockStatus } from '@/theme/status';
@@ -20,6 +16,7 @@ import type { QuarterOption, QuarterKey } from '../domain/quarter';
 import { updateRockStatusAction } from '../server/actions';
 import RockCard from './RockCard';
 import CreateRockDialog from './CreateRockDialog';
+import QuarterSelect from './QuarterSelect';
 
 /**
  * Personal "My Rocks" — the viewer's Individual rocks for a quarter (T8.4 / B1).
@@ -42,11 +39,6 @@ export default function MyRocksView({
   const { state: items, run, isPending } = useOptimisticAction(rocks);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const selectedValue = `${selected.fiscalYear}-${selected.quarterIndex}`;
-  const hasSelected = quarterOptions.some(
-    (o) => `${o.fiscalYear}-${o.quarterIndex}` === selectedValue,
-  );
 
   const changeQuarter = (value: string) => {
     const [fy, q] = value.split('-');
@@ -75,29 +67,11 @@ export default function MyRocksView({
           My Rocks
         </Typography>
         <Stack direction="row" gap={1} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="quarter-label">Quarter</InputLabel>
-            <Select
-              labelId="quarter-label"
-              label="Quarter"
-              value={selectedValue}
-              onChange={(e) => changeQuarter(e.target.value)}
-            >
-              {!hasSelected ? (
-                <MenuItem
-                  value={selectedValue}
-                >{`Q${selected.quarterIndex} ${selected.fiscalYear}`}</MenuItem>
-              ) : null}
-              {quarterOptions.map((o) => (
-                <MenuItem
-                  key={`${o.fiscalYear}-${o.quarterIndex}`}
-                  value={`${o.fiscalYear}-${o.quarterIndex}`}
-                >
-                  {o.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <QuarterSelect
+            quarterOptions={quarterOptions}
+            selected={selected}
+            onChange={changeQuarter}
+          />
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setDialogOpen(true)}>
             Add Rock
           </Button>
