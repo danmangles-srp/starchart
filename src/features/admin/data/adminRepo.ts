@@ -1,12 +1,37 @@
 import type { PrismaClient, TeamRole } from '@prisma/client';
 import { db } from '@/lib/db';
-import { NotFoundError } from '@/lib/auth/errors';
+import { AppError, NotFoundError } from '@/lib/auth/errors';
 
 // Every write is scoped to orgId so an Admin can only touch their own org (FR-2.7).
 
 export async function createDepartment(orgId: string, name: string, prisma: PrismaClient = db) {
   const count = await prisma.department.count({ where: { orgId } });
   return prisma.department.create({ data: { orgId, name, order: count + 1 } });
+}
+
+/**
+ * Retire a department (archive, never hard-delete — INV-10 / AC-2.5.1). Refuses while
+ * it still has active teams so teams are never orphaned from the switcher grouping.
+ */
+export async function archiveDepartment(
+  orgId: string,
+  departmentId: string,
+  prisma: PrismaClient = db,
+) {
+  const dept = await prisma.department.findFirst({
+    where: { id: departmentId, orgId },
+    select: { id: true, archivedAt: true },
+  });
+  if (!dept || dept.archivedAt) {
+    throw new NotFoundError('Department not found or already archived.');
+  }
+  const activeTeams = await prisma.team.count({
+    where: { orgId, departmentId, archivedAt: null },
+  });
+  if (activeTeams > 0) {
+    throw new AppError('conflict', 'Move or archive this department’s teams before retiring it.');
+  }
+  await prisma.department.update({ where: { id: departmentId }, data: { archivedAt: new Date() } });
 }
 
 export async function createTeam(
@@ -123,7 +148,7 @@ export async function upsertQuarterDefinition(
 
 export async function getAdminOverview(orgId: string, prisma: PrismaClient = db) {
   const [departments, teams, users, quarters] = await Promise.all([
-    prisma.department.findMany({ where: { orgId }, orderBy: { order: 'asc' } }),
+    prisma.department.findMany({ where: { orgId, archivedAt: null }, orderBy: { order: 'asc' } }),
     prisma.team.findMany({
       where: { orgId },
       orderBy: [{ isLeadership: 'desc' }, { order: 'asc' }],
