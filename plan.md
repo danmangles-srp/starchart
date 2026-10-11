@@ -169,7 +169,7 @@ the PR.** Don't re-ask a resolved decision.
 | M5 Issues (incl. solve → convert) | **IN PROGRESS** |
 | M6 My Week home + Team dashboards | **COMPLETE** |
 | M7 Polish: search, notifications, a11y/perf/responsive | **COMPLETE** (T7.1–T7.4; an in-app notification center was scoped as an Idea, not a v1 ticket) |
-| M8 Architectural refactor & UX-excellence pass | **PLANNED** (2026-10-11, full-codebase review) |
+| M8 Architectural refactor & UX-excellence pass | **IN PROGRESS** (2026-10-11; T8.1/T8.2/T8.3/T8.6 done, gate green) |
 
 ---
 
@@ -479,6 +479,33 @@ missing Company/Individual Rocks views; UX priorities = **design tokens + motion
 no `@tanstack/*` import left; **every app route renders a loading skeleton**; **`WeeklyEntry` carries
 `orgId`**; **all three Rock levels are reachable**; a denied sign-in shows a plain message; the app bar
 shows the real signed-in user; `/design-review` ≥ 4/5 (light **and** dark) on every changed screen.
+
+### Execution status — RESUME HERE (updated 2026-10-11)
+
+All work is on local branch **`refactor/m8`** (off `main`, **not pushed**, no PRs open; `main` is at
+`23bea4f`). The gate (`sh scripts/gate.sh`) is **green** on every commit below.
+
+| Ticket | State | Commit(s) |
+| --- | --- | --- |
+| T8.1 — Env fail-fast | ✅ **DONE** | `65a5444` |
+| T8.2 — One optimistic seam (retire TanStack Query) | ✅ **DONE** (U4 scorecard per-cell refresh deferred — see its note) | `cce64d2`, `8f34c5a` |
+| T8.3 — Data-model integrity (`WeeklyEntry.orgId`, Dept archive) | ✅ **DONE** | `bbaac0b` |
+| T8.6 — Loading skeletons + cell a11y | ✅ **DONE** | `e44441f` |
+| T8.4 — All three Rock levels usable | ⬜ TODO | — |
+| T8.5 — Identity surfacing + sign-in denial | ⬜ TODO (safe, no DB) | — |
+| T8.7 — Time correctness (tz) | ⬜ TODO | — |
+| T8.8 — Design-token system | ⬜ TODO (**user priority**; benefits from `/design-review`) | — |
+| T8.9 — Motion & micro-interactions | ⬜ TODO (**user priority**; needs T8.8) | — |
+| T8.10 — States + dashboard polish | ⬜ TODO | — |
+
+**Suggested next:** T8.5 (self-contained, no DB) or the user-prioritized UX pair **T8.8 → T8.9**.
+
+**For whoever resumes:**
+- **DB resets are blocked for the AI agent** by the auto-mode classifier. Dev + test DBs already have
+  migration `20261011120000_weekly_entry_org_and_department_archive` applied via `migrate deploy`, and the
+  old `Rock.sourceIssueId` drift is cleared. For future schema work, prefer a hand-authored migration +
+  `migrate deploy`, or have the **user** run `migrate reset` via `! …`.
+- Commits are **local only** — nothing pushed, no PRs; the user decides when to push / how to split.
 
 ### Findings register (what this milestone fixes)
 
