@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/theme/theme';
 
+import { signOut } from 'next-auth/react';
 vi.mock('next-auth/react', () => ({ signOut: vi.fn() }));
 vi.mock('next/link', () => ({
   default: ({ href, children, ...rest }: { href: string; children: ReactNode }) => (
@@ -46,6 +47,13 @@ describe('ProfileMenu', () => {
     const profile = await screen.findByRole('menuitem', { name: 'Profile' });
     expect(profile).toHaveAttribute('href', '/me');
     expect(screen.getByRole('menuitem', { name: 'Sign out' })).toBeInTheDocument();
+  });
+
+  it('signs out with the sign-in callback when Sign out is clicked (FR-1.4)', async () => {
+    renderMenu();
+    await userEvent.click(screen.getByRole('button', { name: /Account/ }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Sign out' }));
+    expect(vi.mocked(signOut)).toHaveBeenCalledWith({ callbackUrl: '/sign-in' });
   });
 
   it('falls back to the email when there is no name', () => {

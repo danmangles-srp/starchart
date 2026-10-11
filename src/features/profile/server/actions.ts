@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { authorizedAction } from '@/lib/auth/authorizedAction';
+import { routes } from '@/lib/routes';
 import { updateJobTitle } from '../data/profileRepo';
-import { UpdateJobTitleSchema } from '../domain/schema';
+import { UpdateJobTitleSchema, normalizeJobTitle } from '../domain/schema';
 
 /**
  * Set the viewer's own job title (FR-1.3). A user may only edit their own profile,
@@ -13,8 +14,9 @@ export const updateJobTitleAction = authorizedAction({
   schema: UpdateJobTitleSchema,
   authorize: () => true,
   handler: async ({ viewer, input }) => {
-    await updateJobTitle(viewer.orgId, viewer.id, input.jobTitle ?? null);
-    revalidatePath('/me');
-    return { jobTitle: input.jobTitle ?? null };
+    const stored = normalizeJobTitle(input.jobTitle);
+    await updateJobTitle(viewer.orgId, viewer.id, stored);
+    revalidatePath(routes.profile());
+    return { jobTitle: stored };
   },
 });

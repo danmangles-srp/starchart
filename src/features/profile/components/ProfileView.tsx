@@ -34,6 +34,14 @@ export default function ProfileView({ profile }: { profile: Profile }) {
 
   const displayName = profile.name?.trim() || profile.email;
   const role = displayRole(profile);
+  const jobTitleField = register('jobTitle');
+
+  // Clear the saved/error banners as soon as the field is edited, so a success
+  // message never lingers over a dirty, unsaved value.
+  const clearBanners = () => {
+    if (saved) setSaved(false);
+    if (error) setError(null);
+  };
 
   const submit = handleSubmit((values) => {
     setError(null);
@@ -86,7 +94,11 @@ export default function ProfileView({ profile }: { profile: Profile }) {
             <TextField
               label="Job title"
               placeholder="e.g. Head of Marketing"
-              {...register('jobTitle')}
+              {...jobTitleField}
+              onChange={(e) => {
+                clearBanners();
+                void jobTitleField.onChange(e);
+              }}
               error={Boolean(errors.jobTitle)}
               helperText={errors.jobTitle?.message ?? 'Optional — shown in your account menu.'}
               fullWidth

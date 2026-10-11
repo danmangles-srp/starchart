@@ -1,13 +1,13 @@
 import type { PrismaClient, TeamRole } from '@prisma/client';
 import { db } from '@/lib/db';
 import { NotFoundError } from '@/lib/auth/errors';
+import { normalizeJobTitle } from '../domain/schema';
 
 export interface ProfileMembership {
   teamId: string;
   teamName: string;
   teamRole: TeamRole;
   departmentName: string | null;
-  isLeadership: boolean;
 }
 
 export interface Profile {
@@ -54,7 +54,6 @@ export async function getProfile(
         teamName: m.team.name,
         teamRole: m.teamRole,
         departmentName: m.team.department?.name ?? null,
-        isLeadership: m.team.isLeadership,
       }))
       .sort((a, b) => a.teamName.localeCompare(b.teamName)),
   };
@@ -83,7 +82,7 @@ export async function updateJobTitle(
 ): Promise<void> {
   const res = await prisma.user.updateMany({
     where: { id: userId, orgId },
-    data: { jobTitle: jobTitle && jobTitle.trim().length > 0 ? jobTitle.trim() : null },
+    data: { jobTitle: normalizeJobTitle(jobTitle) },
   });
   if (res.count === 0) throw new NotFoundError('User not found.');
 }

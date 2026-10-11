@@ -25,7 +25,6 @@ const profile: Profile = {
       teamName: 'Marketing',
       teamRole: 'LEAD',
       departmentName: 'Growth',
-      isLeadership: false,
     },
   ],
 };
