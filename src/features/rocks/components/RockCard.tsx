@@ -21,7 +21,7 @@ export default function RockCard({
   disabled?: boolean;
 }) {
   return (
-    <Card variant="outlined" sx={hoverLift}>
+    <Card sx={hoverLift}>
       <CardContent>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
           <Box sx={{ minWidth: 0 }}>
