@@ -3,6 +3,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 /** Plain-language error state (INV-7) with an optional Retry — never a raw stack. */
 export default function ErrorState({
@@ -27,6 +28,7 @@ export default function ErrorState({
         gap: 1.5,
       }}
     >
+      <ErrorOutlineIcon aria-hidden sx={{ fontSize: 48, color: 'error.main' }} />
       <Typography variant="h6" component="p">
         {title}
       </Typography>

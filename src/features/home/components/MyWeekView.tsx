@@ -47,7 +47,9 @@ function PanelCard({
             {title}
           </Typography>
         )}
-        <Chip size="small" label={count} />
+        <Typography variant="h6" component="span" sx={{ color: 'text.secondary' }}>
+          {count}
+        </Typography>
       </Stack>
       {count === 0 ? (
         <Typography variant="body2" color="text.secondary">
