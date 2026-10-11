@@ -8,6 +8,7 @@ import {
   isoWeekEquals,
   trailingIsoWeeks,
   timeAnchor,
+  formatInTz,
 } from './time';
 
 describe('clock', () => {
@@ -89,5 +90,34 @@ describe('timeAnchor', () => {
     expect(a.isoWeekLabel).toBe(`W${a.isoWeek}`);
     expect(a.fiscalYear).toBe(2026);
     expect(a.quarterIndex).toBe(2);
+  });
+
+  it('uses an org-resolved quarter when supplied (AC-3.2.4), overriding the calendar one', () => {
+    // A fiscal year where "Q1 2027" spans this May date — the anchor must honour it.
+    const a = timeAnchor(new Date('2026-05-10T00:00:00Z'), {
+      fiscalYear: 2027,
+      quarterIndex: 1,
+      label: 'FY27 Q1',
+    });
+    expect(a.quarterLabel).toBe('FY27 Q1');
+    expect(a.fiscalYear).toBe(2027);
+    expect(a.quarterIndex).toBe(1);
+    // ISO week still derives from the instant, not the quarter.
+    expect(a.isoWeekLabel).toBe(`W${a.isoWeek}`);
+  });
+});
+
+describe('formatInTz', () => {
+  it('renders a stored-UTC instant in the viewer timezone', () => {
+    // 2026-01-01T02:30Z is still Dec 31 in New York (UTC-5).
+    const utc = new Date('2026-01-01T02:30:00Z');
+    expect(formatInTz(utc, 'America/New_York', 'yyyy-MM-dd HH:mm')).toBe('2025-12-31 21:30');
+    expect(formatInTz(utc, 'UTC', 'yyyy-MM-dd HH:mm')).toBe('2026-01-01 02:30');
+  });
+
+  it('falls back to UTC for an empty or invalid zone instead of throwing', () => {
+    const utc = new Date('2026-06-15T12:00:00Z');
+    expect(formatInTz(utc, '', 'HH:mm')).toBe('12:00');
+    expect(formatInTz(utc, 'Not/AZone', 'HH:mm')).toBe('12:00');
   });
 });

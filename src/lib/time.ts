@@ -1,4 +1,5 @@
 import { getISOWeek, getISOWeekYear, startOfISOWeek, subWeeks } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 
 /**
  * Clock seam (INV-4). All "now" flows through an injected AppClock so that
@@ -83,7 +84,22 @@ export function calendarQuarterKey(date: Date): QuarterKey {
   };
 }
 
-/** The shared "today" context shown in the app bar (FR-7.3): calendar quarter + ISO week. */
+/**
+ * Render a stored-UTC instant in a specific IANA timezone (INV-4: "store UTC,
+ * display in the viewer's timezone"). `timeZone` e.g. 'America/New_York'; an invalid
+ * or empty zone falls back to UTC so a bad viewer value never throws in render.
+ */
+export function formatInTz(instant: Date | string, timeZone: string, fmt: string): string {
+  const date = new Date(instant);
+  const zone = timeZone && timeZone.trim().length > 0 ? timeZone : 'UTC';
+  try {
+    return formatInTimeZone(date, zone, fmt);
+  } catch {
+    return formatInTimeZone(date, 'UTC', fmt);
+  }
+}
+
+/** The shared "today" context shown in the app bar (FR-7.3): quarter + ISO week. */
 export interface TimeAnchor {
   fiscalYear: number;
   quarterIndex: number;
@@ -93,13 +109,30 @@ export interface TimeAnchor {
   isoWeekLabel: string;
 }
 
-export function timeAnchor(now: Date): TimeAnchor {
-  const q = calendarQuarterKey(now);
+/** A resolved quarter the caller supplies (e.g. from the org's QuarterDefinitions). */
+export interface ResolvedQuarter {
+  fiscalYear: number;
+  quarterIndex: number;
+  label: string;
+}
+
+/**
+ * The app-bar anchor. `quarter` is the org-resolved current quarter (AC-3.2.4) — when
+ * omitted, the calendar quarter is used as the fallback (INV-4), matching the Rocks
+ * selector's own fallback. The ISO week is always derived from `now`.
+ */
+export function timeAnchor(now: Date, quarter?: ResolvedQuarter): TimeAnchor {
+  const q =
+    quarter ??
+    (() => {
+      const ck = calendarQuarterKey(now);
+      return { ...ck, label: `Q${ck.quarterIndex} ${ck.fiscalYear}` };
+    })();
   const w = isoWeekKey(now);
   return {
     fiscalYear: q.fiscalYear,
     quarterIndex: q.quarterIndex,
-    quarterLabel: `Q${q.quarterIndex} ${q.fiscalYear}`,
+    quarterLabel: q.label,
     isoYear: w.isoYear,
     isoWeek: w.isoWeek,
     isoWeekLabel: `W${w.isoWeek}`,
