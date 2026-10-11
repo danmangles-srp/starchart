@@ -152,10 +152,10 @@ the PR.** Don't re-ask a resolved decision.
 
 ## Plan of Attack (restart here)
 
-> Status as of **2026-10-11**. M0–M7 merged (gate green on `main`); outstanding from v1: T3.7
-> (Google-login config — env/console) and T5.5 (convert-to-Todo/Rock, user-deferred). **M8**
-> (architectural refactor & UX-excellence pass) is planned from a full-codebase review — see below.
-> Execute top-down; one ticket = one PR off `main`.
+> Status as of **2026-10-11**. **M0–M8 all merged** (gate green on `main`, 344 tests). T3.7 (Google
+> sign-in) fixed (#47). Deferred by the user: T5.5 (convert-to-Todo/Rock). Perf follow-on: U4 (Scorecard
+> per-cell reconcile). UX manual step: `/design-review` on the T8.8–T8.10 screens. v1 scope is complete —
+> the four modules + identity/org + home/dashboards + polish + the M8 refactor/UX pass.
 
 ### Status board
 
@@ -164,12 +164,12 @@ the PR.** Don't re-ask a resolved decision.
 | M0 Foundation, app shell & shared primitives | **COMPLETE** |
 | M1 Identity, Org, Teams & RBAC | **COMPLETE** |
 | M2 Rocks | **COMPLETE** |
-| M3 Data / Scorecard | **IN PROGRESS** (T3.1–T3.6 done; T3.7 Google-login bug blocked on console/env) |
+| M3 Data / Scorecard | **COMPLETE** (T3.1–T3.6; T3.7 Google-login fixed #47 — code + GCP console redirect URI) |
 | M4 Todos | **COMPLETE** |
-| M5 Issues (incl. solve → convert) | **IN PROGRESS** |
+| M5 Issues (incl. solve → convert) | **COMPLETE** (T5.1–T5.4; T5.5 convert user-deferred) |
 | M6 My Week home + Team dashboards | **COMPLETE** |
 | M7 Polish: search, notifications, a11y/perf/responsive | **COMPLETE** (T7.1–T7.4; an in-app notification center was scoped as an Idea, not a v1 ticket) |
-| M8 Architectural refactor & UX-excellence pass | **IN PROGRESS** (2026-10-11; T8.1/T8.2/T8.3/T8.6 done, gate green) |
+| M8 Architectural refactor & UX-excellence pass | **COMPLETE** (T8.1–T8.10 merged #43–#52; gate green on `main`) |
 
 ---
 
@@ -480,32 +480,42 @@ no `@tanstack/*` import left; **every app route renders a loading skeleton**; **
 `orgId`**; **all three Rock levels are reachable**; a denied sign-in shows a plain message; the app bar
 shows the real signed-in user; `/design-review` ≥ 4/5 (light **and** dark) on every changed screen.
 
-### Execution status — RESUME HERE (updated 2026-10-11)
+### Execution status — M8 COMPLETE (updated 2026-10-11)
 
-All work is on local branch **`refactor/m8`** (off `main`, **not pushed**, no PRs open; `main` is at
-`23bea4f`). The gate (`sh scripts/gate.sh`) is **green** on every commit below.
+All M8 tickets are merged to `main` via squash-merged PRs. The gate (`sh scripts/gate.sh`) is **green**
+on `main`. 344 tests; logic coverage ~84%.
 
-| Ticket | State | Commit(s) |
+| Ticket | State | PR |
 | --- | --- | --- |
-| T8.1 — Env fail-fast | ✅ **DONE** | `65a5444` |
-| T8.2 — One optimistic seam (retire TanStack Query) | ✅ **DONE** (U4 scorecard per-cell refresh deferred — see its note) | `cce64d2`, `8f34c5a` |
-| T8.3 — Data-model integrity (`WeeklyEntry.orgId`, Dept archive) | ✅ **DONE** | `bbaac0b` |
-| T8.6 — Loading skeletons + cell a11y | ✅ **DONE** | `e44441f` |
-| T8.4 — All three Rock levels usable | ⬜ TODO | — |
-| T8.5 — Identity surfacing + sign-in denial | ⬜ TODO (safe, no DB) | — |
-| T8.7 — Time correctness (tz) | ⬜ TODO | — |
-| T8.8 — Design-token system | ⬜ TODO (**user priority**; benefits from `/design-review`) | — |
-| T8.9 — Motion & micro-interactions | ⬜ TODO (**user priority**; needs T8.8) | — |
-| T8.10 — States + dashboard polish | ⬜ TODO | — |
+| T8.1 — Env fail-fast | ✅ **COMPLETE** | #43 |
+| T8.2 — One optimistic seam (retire TanStack Query) | ✅ **COMPLETE** (U4 scorecard per-cell refresh still deferred) | #43 |
+| T8.3 — Data-model integrity (`WeeklyEntry.orgId`, Dept archive) | ✅ **COMPLETE** | #43 |
+| T8.6 — Loading skeletons + cell a11y | ✅ **COMPLETE** | #43 |
+| T8.4 — All three Rock levels usable | ✅ **COMPLETE** | #45 |
+| T8.5 — Identity surfacing + sign-in denial | ✅ **COMPLETE** | #46 |
+| T8.7 — Time correctness (tz) | ✅ **COMPLETE** | #49 |
+| T8.8 — Design-token system | ✅ **COMPLETE** | #50 |
+| T8.9 — Motion & micro-interactions | ✅ **COMPLETE** | #51 |
+| T8.10 — States + dashboard polish | ✅ **COMPLETE** | #52 |
 
-**Suggested next:** T8.5 (self-contained, no DB) or the user-prioritized UX pair **T8.8 → T8.9**.
+Also merged alongside M8: **#44** `chore(ci)` raised vitest timeouts (deterministic coverage gate);
+**#47** T3.7 Google sign-in fix (provider creds via typed env + the GCP console redirect URI); **#48**
+hotfix marking `MyWeekView`/`TeamDashboardView` as client components (they crashed as RSC passing
+`component={NextLink}`).
 
-**For whoever resumes:**
-- **DB resets are blocked for the AI agent** by the auto-mode classifier. Dev + test DBs already have
-  migration `20261011120000_weekly_entry_org_and_department_archive` applied via `migrate deploy`, and the
-  old `Rock.sourceIssueId` drift is cleared. For future schema work, prefer a hand-authored migration +
-  `migrate deploy`, or have the **user** run `migrate reset` via `! …`.
-- Commits are **local only** — nothing pushed, no PRs; the user decides when to push / how to split.
+**Still open / deferred (not M8):**
+- **U4** — Scorecard drops the per-cell `router.refresh()` for a client-side row-summary reconcile
+  (perf polish; deferred in T8.2).
+- **T5.5** — convert a solved Issue → Todo/Rock (user-deferred).
+- **`/design-review` ≥ 4/5** on T8.8–T8.10 screens (light + dark) — a **manual** step: automated
+  design-review needs a logged-in browser session, which can't run headless here.
+
+**Notes for whoever resumes:**
+- **DB resets are blocked for the AI agent** by the auto-mode classifier. Dev + test DBs have migration
+  `20261011120000_weekly_entry_org_and_department_archive` applied via `migrate deploy`. For future schema
+  work, prefer a hand-authored migration + `migrate deploy`, or have the **user** run `migrate reset`.
+- Auth works: Google sign-in for `srpsoftware.com`; `dan@srpsoftware.com` was set `isAdmin=true` directly
+  in the dev DB.
 
 ### Findings register (what this milestone fixes)
 
