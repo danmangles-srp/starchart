@@ -13,9 +13,9 @@ function renderTile(props: Parameters<typeof StatTile>[0]) {
 }
 
 describe('StatTile', () => {
-  it('names the tile "<label>: <value>" for screen readers and shows both', () => {
+  it('announces as one unit "<label>: <value>" and shows both visually', () => {
     renderTile({ label: 'Overdue', value: 3, tone: 'error' });
-    const tile = screen.getByRole('group', { name: 'Overdue: 3' });
+    const tile = screen.getByRole('img', { name: 'Overdue: 3' });
     expect(within(tile).getByText('3')).toBeInTheDocument();
     expect(within(tile).getByText('Overdue')).toBeInTheDocument();
   });
@@ -28,6 +28,6 @@ describe('StatTile', () => {
 
   it('defaults to a neutral tone', () => {
     renderTile({ label: 'Done', value: 1 });
-    expect(screen.getByRole('group', { name: 'Done: 1' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Done: 1' })).toBeInTheDocument();
   });
 });

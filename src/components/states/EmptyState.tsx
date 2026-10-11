@@ -31,7 +31,7 @@ export default function EmptyState({
       }}
     >
       <Box aria-hidden sx={{ color: 'text.disabled', '& > svg': { fontSize: 48 }, lineHeight: 0 }}>
-        {icon ?? <InboxIcon sx={{ fontSize: 48 }} />}
+        {icon ?? <InboxIcon />}
       </Box>
       <Typography variant="h6" component="p">
         {title}

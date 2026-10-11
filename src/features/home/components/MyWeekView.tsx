@@ -47,7 +47,12 @@ function PanelCard({
             {title}
           </Typography>
         )}
-        <Typography variant="h6" component="span" sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant="h6"
+          component="span"
+          aria-label={`${count} ${count === 1 ? 'item' : 'items'}`}
+          sx={{ color: 'text.secondary' }}
+        >
           {count}
         </Typography>
       </Stack>
