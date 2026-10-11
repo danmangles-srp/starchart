@@ -36,4 +36,12 @@ describe('theme', () => {
     expect(theme.transitions.easing.easeInOut).toMatch(/^cubic-bezier\(/);
     expect(theme.transitions.easing.easeOut).not.toBe(theme.transitions.easing.easeIn);
   });
+
+  it('collapses motion for prefers-reduced-motion viewers (T8.9 / NFR-3.*)', () => {
+    const overrides = (theme.components?.MuiCssBaseline?.styleOverrides ?? {}) as Record<
+      string,
+      unknown
+    >;
+    expect(overrides['@media (prefers-reduced-motion: reduce)']).toBeDefined();
+  });
 });

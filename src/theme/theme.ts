@@ -59,6 +59,19 @@ const theme = createTheme({
           outline: '2px solid var(--mui-palette-primary-main)',
           outlineOffset: '2px',
         },
+        // Full prefers-reduced-motion support (T8.9 / NFR-3.*): collapse every
+        // animation/transition — duration AND delay — to near-instant for viewers
+        // who ask for it, app-wide, so no component has to remember.
+        '@media (prefers-reduced-motion: reduce)': {
+          '*, *::before, *::after': {
+            animationDuration: '0.01ms !important',
+            animationIterationCount: '1 !important',
+            animationDelay: '0.01ms !important',
+            transitionDuration: '0.01ms !important',
+            transitionDelay: '0.01ms !important',
+            scrollBehavior: 'auto !important',
+          },
+        },
       },
     },
     MuiButton: {
