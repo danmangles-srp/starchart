@@ -90,9 +90,9 @@ describe('ScorecardGrid', () => {
   it('shows value + marker + text status for each cell — never color alone', () => {
     renderGrid(vm());
     // aria-label carries the week, the value, and a textual goal status.
-    const off = screen.getByLabelText('Week 40: 48 calls, off goal');
-    const on = screen.getByLabelText('Week 39: 60 calls, on goal');
-    const empty = screen.getByLabelText('Week 38: —, no entry');
+    const off = screen.getByLabelText('Calls, week 40: 48 calls, off goal (goal ≥ 50 calls)');
+    const on = screen.getByLabelText('Calls, week 39: 60 calls, on goal (goal ≥ 50 calls)');
+    const empty = screen.getByLabelText('Calls, week 38: —, no entry (goal ≥ 50 calls)');
     // each cell also renders a marker icon (svg), so status is not by color alone
     expect(off.querySelector('svg')).toBeInTheDocument();
     expect(on.querySelector('svg')).toBeInTheDocument();
@@ -132,7 +132,9 @@ describe('ScorecardGrid', () => {
   });
 
   async function editCell(user: ReturnType<typeof userEvent.setup>, value: string) {
-    const cellContent = screen.getByLabelText('Week 40: 48 calls, off goal');
+    const cellContent = screen.getByLabelText(
+      'Calls, week 40: 48 calls, off goal (goal ≥ 50 calls)',
+    );
     const cell = cellContent.closest('[role="gridcell"]');
     expect(cell).not.toBeNull();
     await user.dblClick(cell!);
@@ -172,7 +174,9 @@ describe('ScorecardGrid', () => {
   it('does not allow editing when the viewer cannot edit', async () => {
     const user = userEvent.setup();
     renderGrid(vm({ canEdit: false }));
-    const cell = screen.getByLabelText('Week 40: 48 calls, off goal').closest('[role="gridcell"]');
+    const cell = screen
+      .getByLabelText('Calls, week 40: 48 calls, off goal (goal ≥ 50 calls)')
+      .closest('[role="gridcell"]');
     await user.dblClick(cell!);
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument();
   });
