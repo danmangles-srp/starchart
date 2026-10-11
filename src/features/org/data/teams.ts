@@ -35,11 +35,11 @@ export async function getReadableTeam(
   viewer: Viewer,
   teamId: string,
   prisma: PrismaClient = db,
-): Promise<{ id: string; name: string } | null> {
+): Promise<{ id: string; name: string; isLeadership: boolean } | null> {
   if (!canReadTeam(viewer, teamId)) return null;
   return prisma.team.findFirst({
     where: { id: teamId, orgId: viewer.orgId, archivedAt: null },
-    select: { id: true, name: true },
+    select: { id: true, name: true, isLeadership: true },
   });
 }
 

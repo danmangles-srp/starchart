@@ -102,6 +102,54 @@ export async function listTeamRocks(
   return rocks.map((r) => toSummary(r as unknown as RockRow));
 }
 
+/**
+ * Company Rocks for a quarter (level COMPANY, org-wide — no team). Surfaced on the
+ * Leadership board so Company rocks no longer vanish after creation (finding B1).
+ */
+export async function listCompanyRocks(
+  orgId: string,
+  quarter: QuarterRef,
+  prisma: PrismaClient = db,
+): Promise<RockSummary[]> {
+  const rocks = await prisma.rock.findMany({
+    where: {
+      orgId,
+      level: 'COMPANY',
+      fiscalYear: quarter.fiscalYear,
+      quarterIndex: quarter.quarterIndex,
+    },
+    include: withMilestones,
+    orderBy: { createdAt: 'asc' },
+    take: MAX_TEAM_LIST,
+  });
+  return rocks.map((r) => toSummary(r as unknown as RockRow));
+}
+
+/**
+ * A person's Individual Rocks for a quarter (level INDIVIDUAL, owned by them).
+ * Powers the personal "My Rocks" surface (finding B1 / FR-3.1).
+ */
+export async function listIndividualRocks(
+  orgId: string,
+  ownerId: string,
+  quarter: QuarterRef,
+  prisma: PrismaClient = db,
+): Promise<RockSummary[]> {
+  const rocks = await prisma.rock.findMany({
+    where: {
+      orgId,
+      level: 'INDIVIDUAL',
+      ownerId,
+      fiscalYear: quarter.fiscalYear,
+      quarterIndex: quarter.quarterIndex,
+    },
+    include: withMilestones,
+    orderBy: { createdAt: 'asc' },
+    take: MAX_TEAM_LIST,
+  });
+  return rocks.map((r) => toSummary(r as unknown as RockRow));
+}
+
 export async function getRockDetail(
   orgId: string,
   rockId: string,

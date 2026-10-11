@@ -107,7 +107,12 @@ export default function MyWeekView({ data }: { data: MyWeekData }) {
           alignItems: 'start',
         }}
       >
-        <PanelCard title="My Rocks" count={data.rocks.length} emptyText="No Rocks this quarter.">
+        <PanelCard
+          title="My Rocks"
+          count={data.rocks.length}
+          href="/me/rocks"
+          emptyText="No Rocks this quarter."
+        >
           {data.rocks.slice(0, MAX_ITEMS).map((r) => (
             <Stack
               key={r.id}
@@ -116,10 +121,10 @@ export default function MyWeekView({ data }: { data: MyWeekData }) {
               alignItems="center"
               gap={1}
             >
-              {r.teamId ? (
+              {r.teamId || r.level === 'INDIVIDUAL' ? (
                 <Link
                   component={NextLink}
-                  href={`/t/${r.teamId}/rocks`}
+                  href={r.teamId ? `/t/${r.teamId}/rocks` : '/me/rocks'}
                   variant="body2"
                   underline="hover"
                   noWrap
@@ -127,6 +132,7 @@ export default function MyWeekView({ data }: { data: MyWeekData }) {
                   {r.title}
                 </Link>
               ) : (
+                // A teamless COMPANY rock has no personal destination — render plain.
                 <Typography variant="body2" noWrap>
                   {r.title}
                 </Typography>

@@ -139,6 +139,18 @@ export default function AppShell({
             <ListItemText primary="My Week" />
           </ListItemButton>
         </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton
+            component={NextLink}
+            href={routes.myRocks()}
+            selected={pathname === routes.myRocks()}
+          >
+            <ListItemIcon>
+              <FlagIcon />
+            </ListItemIcon>
+            <ListItemText primary="My Rocks" />
+          </ListItemButton>
+        </ListItem>
       </List>
       <Divider />
       <List subheader={<ListSubheader component="div">Team</ListSubheader>}>

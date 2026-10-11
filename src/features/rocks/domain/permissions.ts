@@ -1,6 +1,23 @@
 import { canEditTeam, canManageOrg, canReadTeam, type Viewer } from '@/lib/auth/permissions';
 import type { RockLevel } from './rock';
 
+/**
+ * The Rock levels a viewer may actually create from a team's Rocks board (T8.4):
+ * TEAM when they may edit that team; COMPANY only on the Leadership board and only
+ * for an Admin — matching {@link canManageRock} so no offered option is a guaranteed
+ * `forbidden` (finding B1). INDIVIDUAL rocks are created from the personal "My Rocks"
+ * surface, not a team board, so they are not offered here.
+ */
+export function allowedRockLevelsForTeam(
+  viewer: Viewer,
+  ctx: { teamId: string; isLeadership: boolean },
+): RockLevel[] {
+  const levels: RockLevel[] = [];
+  if (canEditTeam(viewer, ctx.teamId)) levels.push('TEAM');
+  if (ctx.isLeadership && canManageOrg(viewer)) levels.push('COMPANY');
+  return levels;
+}
+
 export interface RockScope {
   level: RockLevel;
   teamId: string | null;

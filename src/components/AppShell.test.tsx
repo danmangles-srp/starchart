@@ -59,7 +59,7 @@ describe('AppShell', () => {
   it('links module nav to the active team from the URL', () => {
     params = { teamId: 'marketing' };
     renderShell();
-    const link = screen.getAllByRole('link', { name: /Rocks/i })[0];
+    const link = screen.getAllByRole('link', { name: 'Rocks' })[0];
     expect(link).toHaveAttribute('href', '/t/marketing/rocks');
   });
 
