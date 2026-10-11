@@ -28,4 +28,12 @@ describe('theme', () => {
       vars.colorSchemes.dark?.palette.primary.main,
     );
   });
+
+  it('applies the design-token type scale and motion to the theme', () => {
+    expect(theme.typography.h4.fontWeight).toBe(500);
+    expect(theme.typography.button.textTransform).toBe('none');
+    // Motion tokens flow into MUI transitions (consumed by T8.9).
+    expect(theme.transitions.duration.standard).toBe(250);
+    expect(theme.transitions.easing.easeInOut).toMatch(/^cubic-bezier\(/);
+  });
 });
