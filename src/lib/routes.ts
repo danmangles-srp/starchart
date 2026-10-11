@@ -9,6 +9,7 @@ export type ModuleKey = (typeof MODULE_KEYS)[number];
 export const routes = {
   home: () => '/',
   admin: () => '/admin',
+  profile: () => '/me',
   myRocks: () => '/me/rocks',
   myTodos: () => '/me/todos',
   team: (teamId: string) => `/t/${teamId}`,

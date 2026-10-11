@@ -5,6 +5,7 @@ describe('routes', () => {
   it('builds team-scoped URLs with the team in the path', () => {
     expect(routes.home()).toBe('/');
     expect(routes.admin()).toBe('/admin');
+    expect(routes.profile()).toBe('/me');
     expect(routes.myRocks()).toBe('/me/rocks');
     expect(routes.myTodos()).toBe('/me/todos');
     expect(routes.team('marketing')).toBe('/t/marketing');

@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/auth/requireUser';
 import { UnauthenticatedError } from '@/lib/auth/errors';
 import { listReadableTeams } from '@/features/org/data/teams';
+import { getIdentity } from '@/features/profile/data/profileRepo';
 import AppShell from '@/components/AppShell';
 
 /**
@@ -14,6 +15,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     if (error instanceof UnauthenticatedError) redirect('/sign-in');
     throw error;
   });
-  const teams = await listReadableTeams(viewer);
-  return <AppShell teams={teams}>{children}</AppShell>;
+  const [teams, identity] = await Promise.all([
+    listReadableTeams(viewer),
+    getIdentity(viewer.orgId, viewer.id),
+  ]);
+  return (
+    <AppShell teams={teams} viewer={identity}>
+      {children}
+    </AppShell>
+  );
 }
