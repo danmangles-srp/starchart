@@ -500,7 +500,7 @@ function QuartersSection({
         <Button
           type="submit"
           variant="contained"
-          disabled={pending || !label.trim() || !startsOn || !endsOn}
+          disabled={pending || !fiscalYear || !index || !label.trim() || !startsOn || !endsOn}
         >
           Save quarter
         </Button>

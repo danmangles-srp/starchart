@@ -120,8 +120,17 @@ describe('AdminConsole', () => {
     await userEvent.type(screen.getByLabelText('Label'), 'Q2 2026');
     expect(save).toBeDisabled(); // dates still missing
 
+    // Set the year explicitly so the assertion doesn't depend on the real clock
+    // (the field defaults to new Date().getUTCFullYear()).
+    fireEvent.change(screen.getByLabelText('Year'), { target: { value: '2026' } });
     fireEvent.change(screen.getByLabelText('Starts'), { target: { value: '2026-04-01' } });
     fireEvent.change(screen.getByLabelText('Ends'), { target: { value: '2026-06-30' } });
+    expect(save).toBeEnabled();
+
+    // Clearing a numeric field (Number('') === 0) must re-disable, not submit fiscalYear: 0.
+    fireEvent.change(screen.getByLabelText('Year'), { target: { value: '' } });
+    expect(save).toBeDisabled();
+    fireEvent.change(screen.getByLabelText('Year'), { target: { value: '2026' } });
     expect(save).toBeEnabled();
 
     await userEvent.click(save);
