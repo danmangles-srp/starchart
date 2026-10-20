@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/theme/theme';
@@ -86,6 +86,17 @@ function renderView(data: MyWeekData) {
 }
 
 describe('MyWeekView', () => {
+  // Pin "now" so the attention count is deterministic: MyWeekView derives overdue
+  // todos from the real clock (new Date()), so without a fixed clock the todo due
+  // 2026-10-20 flips from future to overdue as the calendar advances (INV-4).
+  beforeAll(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-15T12:00:00.000Z'));
+  });
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   it('shows the all-set empty state when nothing is assigned', () => {
     renderView({ rocks: [], todos: [], measurables: [], issues: [] });
     expect(screen.getByText(/all set/i)).toBeInTheDocument();
