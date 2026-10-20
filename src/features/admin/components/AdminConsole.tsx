@@ -497,7 +497,11 @@ function QuartersSection({
           onChange={(e) => setEndsOn(e.target.value)}
           InputLabelProps={{ shrink: true }}
         />
-        <Button type="submit" variant="contained" disabled={pending}>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={pending || !fiscalYear || !index || !label.trim() || !startsOn || !endsOn}
+        >
           Save quarter
         </Button>
       </Stack>
