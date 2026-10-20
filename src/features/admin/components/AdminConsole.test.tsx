@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/theme/theme';
@@ -108,6 +108,31 @@ describe('AdminConsole', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Confirm' }));
     await waitFor(() =>
       expect(h.archiveDepartmentAction).toHaveBeenCalledWith({ departmentId: 'd1' }),
+    );
+  });
+
+  it('keeps Save quarter disabled until label + start + end are set, then saves', async () => {
+    renderConsole();
+    const save = screen.getByRole('button', { name: /save quarter/i });
+    // Empty required fields: the button must not be a silent no-op — it is disabled.
+    expect(save).toBeDisabled();
+
+    await userEvent.type(screen.getByLabelText('Label'), 'Q2 2026');
+    expect(save).toBeDisabled(); // dates still missing
+
+    fireEvent.change(screen.getByLabelText('Starts'), { target: { value: '2026-04-01' } });
+    fireEvent.change(screen.getByLabelText('Ends'), { target: { value: '2026-06-30' } });
+    expect(save).toBeEnabled();
+
+    await userEvent.click(save);
+    await waitFor(() =>
+      expect(h.upsertQuarterAction).toHaveBeenCalledWith({
+        fiscalYear: 2026,
+        index: 1,
+        label: 'Q2 2026',
+        startsOn: '2026-04-01',
+        endsOn: '2026-06-30',
+      }),
     );
   });
 
